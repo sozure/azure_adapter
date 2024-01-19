@@ -1,9 +1,9 @@
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using VGManager.Adapter.Api.HealthChecks;
+using VGManager.Adapter.Azure;
 using VGManager.Adapter.Azure.Helper;
 using VGManager.Adapter.Azure.Interfaces;
-using VGManager.Adapter.Azure;
-using VGManager.Adapter.Api.HealthChecks;
 
 static partial class Program
 {
