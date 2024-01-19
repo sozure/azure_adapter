@@ -1,7 +1,7 @@
 <SonarQubeAnalysisConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <SonarQubeHostUrl>https://sonarcloud.io</SonarQubeHostUrl>
-  <ProjectKey>BoczV_vgmanager_backend</ProjectKey>
-  <ProjectName>vgmanager_backend</ProjectName>
+  <ProjectKey>BoczV_vgmanager_backend_adapter</ProjectKey>
+  <ProjectName>vgmanager_backend_adapter</ProjectName>
   <ProjectVersion>1.0</ProjectVersion>
   <Organization>boczv</Organization>
   <AdditionalSettings>

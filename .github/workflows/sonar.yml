@@ -26,7 +26,7 @@ jobs:
       - name: Analyze
         working-directory: ./src
         run: | 
-          dotnet sonarscanner begin /k:"BoczV_vgmanager_backend" /o:"boczv" /d:sonar.host.url="https://sonarcloud.io"  /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.coverageReportPaths=".\sonarqubecoverage\SonarQube.xml"
+          dotnet sonarscanner begin /k:"BoczV_vgmanager_backend_adapter" /o:"boczv" /d:sonar.host.url="https://sonarcloud.io"  /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.coverageReportPaths=".\sonarqubecoverage\SonarQube.xml"
           dotnet build
           dotnet test --no-build --collect:"XPlat Code Coverage"
           reportgenerator "-reports:*\TestResults\*\coverage.cobertura.xml" "-targetdir:sonarqubecoverage" "-reporttypes:SonarQube"
