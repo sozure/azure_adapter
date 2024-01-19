@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using VGManager.Adapter.Kafka.Configurations;
 using VGManager.Adapter.Kafka.Interfaces;
-using VGManager.Adapter.Messaging.Models;
+using VGManager.Adapter.Models;
 
 namespace VGManager.Adapter.Kafka.Extensions;
 

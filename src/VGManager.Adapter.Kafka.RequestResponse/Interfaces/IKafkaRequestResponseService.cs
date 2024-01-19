@@ -1,4 +1,4 @@
-using VGManager.Adapter.Messaging.Models.Interfaces;
+using VGManager.Adapter.Models.Interfaces;
 
 namespace VGManager.Adapter.Kafka.RequestResponse.Interfaces;
 

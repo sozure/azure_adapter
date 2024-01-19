@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using VGManager.Adapter.Kafka.RequestResponse.HostedServices;
 using VGManager.Adapter.Kafka.Extensions;
+using VGManager.Adapter.Kafka.RequestResponse.HostedServices;
 using VGManager.Adapter.Kafka.RequestResponse.Interfaces;
-using VGManager.Adapter.Messaging.Models;
-using VGManager.Adapter.Messaging.Models.Interfaces;
+using VGManager.Adapter.Models;
+using VGManager.Adapter.Models.Interfaces;
 
 namespace VGManager.Adapter.Kafka.RequestResponse.Extensions;
 

@@ -1,7 +1,7 @@
 using MessagePack;
-using VGManager.Adapter.Messaging.Models.Interfaces;
+using VGManager.Adapter.Models.Interfaces;
 
-namespace VGManager.Adapter.Messaging.Models;
+namespace VGManager.Adapter.Models;
 
 [MessagePackObject]
 public abstract class CommandMessageBase : MessageBase, ICommandRequest

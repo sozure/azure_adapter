@@ -2,7 +2,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using VGManager.Adapter.Kafka.Interfaces;
 using VGManager.Adapter.Kafka.RequestResponse.Interfaces;
-using VGManager.Adapter.Messaging.Models.Interfaces;
+using VGManager.Adapter.Models.Interfaces;
 
 namespace VGManager.Adapter.Kafka.RequestResponse.HostedServices;
 

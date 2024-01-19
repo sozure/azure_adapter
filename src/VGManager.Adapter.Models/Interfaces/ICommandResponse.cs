@@ -1,4 +1,4 @@
-namespace VGManager.Adapter.Messaging.Models.Interfaces;
+namespace VGManager.Adapter.Models.Interfaces;
 
 public interface ICommandResponse
 {

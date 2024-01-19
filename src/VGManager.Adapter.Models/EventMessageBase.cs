@@ -1,6 +1,6 @@
 using MessagePack;
 
-namespace VGManager.Adapter.Messaging.Models;
+namespace VGManager.Adapter.Models;
 
 [MessagePackObject]
 public class EventMessageBase : MessageBase
