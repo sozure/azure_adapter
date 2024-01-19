@@ -3,13 +3,13 @@
   <PropertyGroup>
       <ProjectGuid>4063BDD1-2CC1-4A30-A9BD-1817CC5FEE03</ProjectGuid>
       <TargetFramework>net8.0</TargetFramework>
-      <PackageReadmeFile>docs\README.md</PackageReadmeFile>
+      <PackageReadmeFile>docs/README.md</PackageReadmeFile>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
     <ItemGroup>
-       <None Include="docs\README.md" Pack="true" PackagePath="\"/>
+       <None Include="docs/README.md" Pack="true" PackagePath="/"/>
     </ItemGroup>
     
     
