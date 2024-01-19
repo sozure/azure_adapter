@@ -11,6 +11,14 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MessagePack.Annotations" Version="2.4.59" />
+        <PackageReference Include="MessagePackAnalyzer" Version="2.4.59">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
     
     
 </Project>
