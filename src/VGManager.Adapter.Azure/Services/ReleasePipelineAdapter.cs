@@ -6,9 +6,11 @@ using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi.Clients;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi.Contracts;
 using System.Text.Json;
+using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Azure.Services.Requests;
 using VGManager.Adapter.Models.Kafka;
+using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
@@ -27,7 +29,7 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
         _logger = logger;
     }
 
-    public async Task<(AdapterStatus, IEnumerable<string>)> GetEnvironmentsAsync(
+    public async Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetEnvironmentsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -39,7 +41,7 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
 
             if (payload is null)
             {
-                return (AdapterStatus.Unknown, Enumerable.Empty<string>());
+                return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
             }
 
             var project = payload.Project;
@@ -60,21 +62,24 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
                 result.AddRange(element.Where(element => !ExcludableEnvironments.Contains(element)));
             }
 
-            return (definition is null ? AdapterStatus.Unknown : AdapterStatus.Success, result);
+            return ResponseProvider.GetResponse((
+                definition is null ? AdapterStatus.Unknown : AdapterStatus.Success, 
+                result
+                ));
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
             _logger.LogError(ex, "{project} azure project is not found.", payload?.Project ?? "Unknown");
-            return (AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>());
+            return ResponseProvider.GetResponse((AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>()));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting git branches from {project} azure project.", payload?.Project ?? "Unknown");
-            return (AdapterStatus.Unknown, Enumerable.Empty<string>());
+            return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
         }
     }
 
-    public async Task<(AdapterStatus, IEnumerable<(string, string)>)> GetVariableGroupsAsync(
+    public async Task<BaseResponse<(AdapterStatus, IEnumerable<(string, string)>)>> GetVariableGroupsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -86,7 +91,7 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
 
             if (payload is null)
             {
-                return (AdapterStatus.Unknown, Enumerable.Empty<(string, string)>());
+                return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<(string, string)>()));
             }
 
             var project = payload.Project;
@@ -101,17 +106,17 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
 
             if (definition is null)
             {
-                return (AdapterStatus.Unknown, Enumerable.Empty<(string, string)>());
+                return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<(string, string)>()));
             }
 
             var variableGroups = await GetVariableGroupNames(project, definition, cancellationToken);
 
-            return (AdapterStatus.Success, variableGroups);
+            return ResponseProvider.GetResponse((AdapterStatus.Success, variableGroups));
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
             _logger.LogError(ex, "{project} azure project is not found.", payload?.Project ?? "Unknown");
-            return (AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<(string, string)>());
+            return ResponseProvider.GetResponse((AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<(string, string)>()));
         }
         catch (Exception ex)
         {
@@ -121,7 +126,7 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
                 payload?.RepositoryName ?? "Unknown",
                 payload?.Project ?? "Unknown"
                 );
-            return (AdapterStatus.Unknown, Enumerable.Empty<(string, string)>());
+            return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<(string, string)>()));
         }
     }
 

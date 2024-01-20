@@ -2,10 +2,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using System.Text;
 using System.Text.Json;
+using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Azure.Services.Requests;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Requests;
+using VGManager.Adapter.Models.Response;
 using YamlDotNet.RepresentationModel;
 
 namespace VGManager.Adapter.Azure.Services;
@@ -15,7 +17,7 @@ public class GitRepositoryAdapter : IGitRepositoryAdapter
     private readonly IHttpClientProvider _clientProvider;
     private readonly ILogger _logger;
 
-    private readonly char[] _notAllowedCharacters = { '{', '}', ' ', '(', ')', '$' };
+    private readonly char[] _notAllowedCharacters = ['{', '}', ' ', '(', ')', '$'];
     private readonly char _startingChar = '$';
     private readonly char _endingChar = '}';
     private readonly string _secretYamlKind = "Secret";
@@ -29,7 +31,7 @@ public class GitRepositoryAdapter : IGitRepositoryAdapter
         _logger = logger;
     }
 
-    public async Task<IEnumerable<GitRepository>> GetAllAsync(
+    public async Task<BaseResponse<IEnumerable<GitRepository>>> GetAllAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -41,22 +43,23 @@ public class GitRepositoryAdapter : IGitRepositoryAdapter
         }
         catch (Exception)
         {
-            return Enumerable.Empty<GitRepository>();
+            return ResponseProvider.GetResponse(Enumerable.Empty<GitRepository>());
         }
 
         if (payload is null)
         {
-            return Enumerable.Empty<GitRepository>();
+            return ResponseProvider.GetResponse(Enumerable.Empty<GitRepository>());
         }
 
         _logger.LogInformation("Request git repositories from {project} azure project.", payload.Project);
         _clientProvider.Setup(payload.Organization, payload.PAT);
         using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
         var repositories = await client.GetRepositoriesAsync(cancellationToken: cancellationToken);
-        return repositories.Where(repo => (!repo.IsDisabled ?? false) && repo.ProjectReference.Name == payload.Project).ToList();
+        var result = repositories.Where(repo => (!repo.IsDisabled ?? false) && repo.ProjectReference.Name == payload.Project).ToList();
+        return ResponseProvider.GetResponse(result);
     }
 
-    public async Task<List<string>> GetVariablesFromConfigAsync(
+    public async Task<BaseResponse<List<string>>> GetVariablesFromConfigAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -68,12 +71,12 @@ public class GitRepositoryAdapter : IGitRepositoryAdapter
         }
         catch (Exception)
         {
-            return Enumerable.Empty<string>().ToList();
+            return ResponseProvider.GetResponse(Enumerable.Empty<string>().ToList());
         }
 
         if (payload is null)
         {
-            return Enumerable.Empty<string>().ToList();
+            return ResponseProvider.GetResponse(Enumerable.Empty<string>().ToList());
         }
 
         var project = payload.Project;
@@ -104,15 +107,15 @@ public class GitRepositoryAdapter : IGitRepositoryAdapter
         {
             var json = await GetJsonObjectAsync(item, cancellationToken);
             var result = GetKeysFromJson(json, payload.Exceptions ?? Enumerable.Empty<string>(), payload.Delimiter);
-            return result;
+            return ResponseProvider.GetResponse(result);
         }
         else if (payload.FilePath.EndsWith(".yaml"))
         {
-            return GetKeysFromYaml(item);
+            return ResponseProvider.GetResponse(GetKeysFromYaml(item));
         }
         else
         {
-            return Enumerable.Empty<string>().ToList();
+            return ResponseProvider.GetResponse(Enumerable.Empty<string>().ToList());
         }
     }
 

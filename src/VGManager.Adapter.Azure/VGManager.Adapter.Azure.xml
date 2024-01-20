@@ -4,8 +4,5 @@
         <name>VGManager.Adapter.Azure</name>
     </assembly>
     <members>
-        <member name="M:VGManager.Adapter.Azure.Services.BuildPipelineAdapter.RunBuildPipelineAsync(VGManager.Adapter.Models.Kafka.VGManagerAdapterCommand,System.Threading.CancellationToken)">
-            <returns></returns>
-        </member>
     </members>
 </doc>

@@ -5,11 +5,13 @@ using Microsoft.VisualStudio.Services.WebApi;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Azure.Services.Requests;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Models;
 using VGManager.Adapter.Models.Requests;
+using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
@@ -23,7 +25,7 @@ public class ProjectAdapter : IProjectAdapter
         _logger = logger;
     }
 
-    public async Task<AdapterResponseModel<IEnumerable<ProjectRequest>>> GetProjectsAsync(
+    public async Task<BaseResponse<AdapterResponseModel<IEnumerable<ProjectRequest>>>> GetProjectsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -35,11 +37,11 @@ public class ProjectAdapter : IProjectAdapter
 
             if (payload is null)
             {
-                return new AdapterResponseModel<IEnumerable<ProjectRequest>>()
+                return ResponseProvider.GetResponse(new AdapterResponseModel<IEnumerable<ProjectRequest>>()
                 {
                     Status = AdapterStatus.Unknown,
                     Data = Enumerable.Empty<ProjectRequest>()
-                };
+                });
             }
 
             var baseUrl = $"https://dev.azure.com/{payload.Organization}";
@@ -60,25 +62,25 @@ public class ProjectAdapter : IProjectAdapter
                 });
             }
 
-            return GetResult(AdapterStatus.Success, projects);
+            return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, projects));
         }
         catch (VssUnauthorizedException ex)
         {
             var status = AdapterStatus.Unauthorized;
             _logger.LogError(ex, "Couldn't get projects. Status: {status}.", status);
-            return GetResult(status);
+            return ResponseProvider.GetResponse(GetResult(status));
         }
         catch (VssServiceResponseException ex)
         {
             var status = AdapterStatus.ResourceNotFound;
             _logger.LogError(ex, "Couldn't get projects. Status: {status}.", status);
-            return GetResult(status);
+            return ResponseProvider.GetResponse(GetResult(status));
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
             _logger.LogError(ex, "Couldn't get projects. Status: {status}.", status);
-            return GetResult(status);
+            return ResponseProvider.GetResponse(GetResult(status));
         }
     }
 
