@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using VGManager.Adapter.Azure.Entities;
+using VGManager.Adapter.Azure.Services.Entities;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Models;
 using VGManager.Adapter.Models.StatusEnums;

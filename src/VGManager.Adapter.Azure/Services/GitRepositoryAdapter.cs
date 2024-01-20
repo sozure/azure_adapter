@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using System.Text;
 using System.Text.Json;
-using VGManager.Adapter.Azure.Entities;
+using VGManager.Adapter.Azure.Services.Entities;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using YamlDotNet.RepresentationModel;
 

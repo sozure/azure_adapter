@@ -1,6 +1,6 @@
 using Microsoft.TeamFoundation.Core.WebApi;
 
-namespace VGManager.Adapter.Azure.Entities;
+namespace VGManager.Adapter.Azure.Services.Entities;
 
 public class ProjectEntity
 {
