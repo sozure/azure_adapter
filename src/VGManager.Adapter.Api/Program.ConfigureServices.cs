@@ -1,11 +1,14 @@
+using CorrelationId.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using VGManager.Adapter.Api;
+using VGManager.Adapter.Api.BackgroundServices;
 using VGManager.Adapter.Api.HealthChecks;
 using VGManager.Adapter.Azure;
 using VGManager.Adapter.Azure.Services;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
+using VGManager.Adapter.Interfaces;
 using VGManager.Adapter.Kafka.Extensions;
 using VGManager.Adapter.Models.Kafka;
 
@@ -15,6 +18,11 @@ static partial class Program
     {
         var configuration = self.Configuration;
         var services = self.Services;
+
+        services.AddDefaultCorrelationId(options =>
+        {
+            options.AddToLoggingScope = true;
+        });
 
         services.AddCors(options =>
         {
@@ -56,6 +64,8 @@ static partial class Program
     private static void RegisterServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<StartupHealthCheck>();
+        services.SetupKafkaConsumer<VGManagerAdapterCommand>(configuration, Constants.SettingKeys.VGManagerAdapterCommandConsumer, false);
+        services.SetupKafkaProducer<VGManagerAdapterCommandResponse>(configuration, Constants.SettingKeys.VGManagerAdapterCommandResponseProducer);
 
         services.AddScoped<IVariableGroupAdapter, VariableGroupAdapter>();
         services.AddScoped<IProjectAdapter, ProjectAdapter>();
@@ -68,8 +78,7 @@ static partial class Program
         services.AddScoped<IReleasePipelineAdapter, ReleasePipelineAdapter>();
         services.AddScoped<IBuildPipelineAdapter, BuildPipelineAdapter>();
         services.AddScoped<ISprintAdapter, SprintAdapter>();
-
-        services.SetupKafkaConsumer<VGManagerAdapterCommand>(configuration, Constants.SettingKeys.VGManagerAdapterCommandResponseConsumer, false);
-        services.SetupKafkaProducer<VGManagerAdapterCommandResponse>(configuration, Constants.SettingKeys.VGManagerAdapterCommandResponseProducer);
+        services.AddScoped<ICommandProcessorService, CommandProcessorService>();
+        services.AddHostedService<CommandProcessorBackgroundService>();
     }
 }

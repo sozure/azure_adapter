@@ -20,6 +20,7 @@ public class CommandProcessorBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        Console.WriteLine("Consume");
         await _consumerService.ConsumeAsync(stoppingToken, async (message) =>
         {
             using var scope = _serviceProvider.CreateScope();
