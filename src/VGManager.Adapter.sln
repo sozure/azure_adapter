@@ -25,9 +25,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VGManager.Adapter.Kafka", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VGManager.Adapter.Kafka.RequestResponse", "VGManager.Adapter.Kafka.RequestResponse\VGManager.Adapter.Kafka.RequestResponse.csproj", "{9DA1004D-1C05-4626-8FD5-C63C86313995}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VGManager.Adapter.Services", "VGManager.Adapter.Services\VGManager.Adapter.Services.csproj", "{510690DD-FE25-4830-BF9B-216D6E2582A3}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VGManager.Adapter.Client", "VGManager.Adapter.Client\VGManager.Adapter.Client.csproj", "{D3626602-2032-4681-8950-E6D6C977781F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VGManager.Adapter.Client", "VGManager.Adapter.Client\VGManager.Adapter.Client.csproj", "{D3626602-2032-4681-8950-E6D6C977781F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,10 +53,6 @@ Global
 		{9DA1004D-1C05-4626-8FD5-C63C86313995}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9DA1004D-1C05-4626-8FD5-C63C86313995}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9DA1004D-1C05-4626-8FD5-C63C86313995}.Release|Any CPU.Build.0 = Release|Any CPU
-		{510690DD-FE25-4830-BF9B-216D6E2582A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{510690DD-FE25-4830-BF9B-216D6E2582A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{510690DD-FE25-4830-BF9B-216D6E2582A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{510690DD-FE25-4830-BF9B-216D6E2582A3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D3626602-2032-4681-8950-E6D6C977781F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D3626602-2032-4681-8950-E6D6C977781F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3626602-2032-4681-8950-E6D6C977781F}.Release|Any CPU.ActiveCfg = Release|Any CPU

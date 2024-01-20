@@ -1,10 +1,10 @@
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using VGManager.Adapter.Interfaces;
 using VGManager.Adapter.Kafka.Interfaces;
 using VGManager.Adapter.Models;
 using VGManager.Adapter.Models.Kafka;
-using VGManager.Adapter.Services.Interfaces;
 
 namespace VGManager.Adapter.Azure;
 

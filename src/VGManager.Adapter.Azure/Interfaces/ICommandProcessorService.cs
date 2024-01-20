@@ -1,6 +1,6 @@
 using VGManager.Adapter.Models;
 
-namespace VGManager.Adapter.Services.Interfaces;
+namespace VGManager.Adapter.Interfaces;
 
 public interface ICommandProcessorService
 {
