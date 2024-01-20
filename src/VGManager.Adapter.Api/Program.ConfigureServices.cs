@@ -1,8 +1,8 @@
 using Microsoft.OpenApi.Models;
-using SMP.Soffie.NeptunAdapter.Services.MapperProfiles;
 using System.Reflection;
 using VGManager.Adapter.Api;
 using VGManager.Adapter.Api.HealthChecks;
+using VGManager.Adapter.Azure;
 using VGManager.Adapter.Azure.Services;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
@@ -69,7 +69,7 @@ static partial class Program
         services.AddScoped<IBuildPipelineAdapter, BuildPipelineAdapter>();
         services.AddScoped<ISprintAdapter, SprintAdapter>();
 
-        services.SetupKafkaConsumer<VGManagerAdapterCommand>(configuration, Constants.SettingKeys.AdapterCommandResponseConsumer, false);
+        services.SetupKafkaConsumer<VGManagerAdapterCommand>(configuration, Constants.SettingKeys.VGManagerAdapterCommandResponseConsumer, false);
         services.SetupKafkaProducer<VGManagerAdapterCommandResponse>(configuration, Constants.SettingKeys.VGManagerAdapterCommandResponseProducer);
     }
 }

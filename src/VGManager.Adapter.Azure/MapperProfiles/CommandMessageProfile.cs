@@ -2,7 +2,7 @@ using AutoMapper;
 using VGManager.Adapter.Models;
 using VGManager.Adapter.Models.Kafka;
 
-namespace SMP.Soffie.NeptunAdapter.Services.MapperProfiles;
+namespace VGManager.Adapter.Azure;
 
 public class CommandMessageProfile : Profile
 {
