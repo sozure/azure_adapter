@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
-using VGManager.Adapter.Azure.Interfaces;
+using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.StatusEnums;
 
-namespace VGManager.Adapter.Azure;
+namespace VGManager.Adapter.Azure.Services;
 
 public class BuildPipelineAdapter : IBuildPipelineAdapter
 {

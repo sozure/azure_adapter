@@ -2,10 +2,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using VGManager.Adapter.Azure.Entities;
-using VGManager.Adapter.Azure.Interfaces;
+using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.StatusEnums;
 
-namespace VGManager.Adapter.Azure;
+namespace VGManager.Adapter.Azure.Services;
 
 public class GitVersionAdapter : IGitVersionAdapter
 {

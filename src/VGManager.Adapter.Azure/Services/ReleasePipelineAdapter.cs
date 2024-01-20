@@ -5,10 +5,10 @@ using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi.Clients;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi.Contracts;
-using VGManager.Adapter.Azure.Interfaces;
+using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.StatusEnums;
 
-namespace VGManager.Adapter.Azure;
+namespace VGManager.Adapter.Azure.Services;
 
 public class ReleasePipelineAdapter : IReleasePipelineAdapter
 {

@@ -1,6 +1,6 @@
 using Microsoft.VisualStudio.Services.WebApi;
 
-namespace VGManager.Adapter.Azure.Interfaces;
+namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IHttpClientProvider
 {

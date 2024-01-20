@@ -1,6 +1,6 @@
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
-using VGManager.Adapter.Azure.Interfaces;
+using VGManager.Adapter.Azure.Services.Interfaces;
 
 namespace VGManager.Adapter.Azure.Helper;
 

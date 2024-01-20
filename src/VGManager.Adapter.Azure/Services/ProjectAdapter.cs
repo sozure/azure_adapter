@@ -6,11 +6,11 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using VGManager.Adapter.Azure.Entities;
-using VGManager.Adapter.Azure.Interfaces;
+using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Models;
 using VGManager.Adapter.Models.StatusEnums;
 
-namespace VGManager.Adapter.Azure;
+namespace VGManager.Adapter.Azure.Services;
 public class ProjectAdapter : IProjectAdapter
 {
     private ProjectHttpClient? _projectHttpClient;

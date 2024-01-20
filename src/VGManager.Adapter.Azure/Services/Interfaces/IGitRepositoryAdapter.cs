@@ -1,7 +1,7 @@
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using VGManager.Adapter.Azure.Entities;
 
-namespace VGManager.Adapter.Azure.Interfaces;
+namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IGitRepositoryAdapter
 {

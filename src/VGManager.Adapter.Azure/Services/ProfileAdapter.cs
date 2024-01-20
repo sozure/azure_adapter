@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Profile;
 using Microsoft.VisualStudio.Services.Profile.Client;
-using VGManager.Adapter.Azure.Interfaces;
+using VGManager.Adapter.Azure.Services.Interfaces;
 
-namespace VGManager.Adapter.Azure;
+namespace VGManager.Adapter.Azure.Services;
 
 public class ProfileAdapter : IProfileAdapter
 {

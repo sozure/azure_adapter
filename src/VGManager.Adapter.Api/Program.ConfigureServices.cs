@@ -2,9 +2,9 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using VGManager.Adapter.Api;
 using VGManager.Adapter.Api.HealthChecks;
-using VGManager.Adapter.Azure;
 using VGManager.Adapter.Azure.Helper;
-using VGManager.Adapter.Azure.Interfaces;
+using VGManager.Adapter.Azure.Services;
+using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Kafka.Extensions;
 using VGManager.Adapter.Models.Kafka;
 

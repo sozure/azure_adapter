@@ -1,6 +1,6 @@
 using Microsoft.VisualStudio.Services.Profile;
 
-namespace VGManager.Adapter.Azure.Interfaces;
+namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IProfileAdapter
 {

@@ -1,7 +1,7 @@
 using VGManager.Adapter.Azure.Entities;
 using VGManager.Adapter.Models.StatusEnums;
 
-namespace VGManager.Adapter.Azure.Interfaces;
+namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IGitVersionAdapter
 {
