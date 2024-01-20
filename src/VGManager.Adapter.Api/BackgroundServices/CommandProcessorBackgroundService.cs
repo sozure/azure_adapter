@@ -1,6 +1,6 @@
+using VGManager.Adapter.Interfaces;
 using VGManager.Adapter.Kafka.Interfaces;
 using VGManager.Adapter.Models.Kafka;
-using VGManager.Adapter.Services.Interfaces;
 
 namespace VGManager.Adapter.Api.BackgroundServices;
 

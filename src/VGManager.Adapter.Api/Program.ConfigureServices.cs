@@ -1,9 +1,12 @@
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using VGManager.Adapter.Api;
 using VGManager.Adapter.Api.HealthChecks;
 using VGManager.Adapter.Azure;
 using VGManager.Adapter.Azure.Helper;
 using VGManager.Adapter.Azure.Interfaces;
+using VGManager.Adapter.Kafka.Extensions;
+using VGManager.Adapter.Models.Kafka;
 
 static partial class Program
 {
@@ -43,12 +46,12 @@ static partial class Program
             typeof(Program)
         );
 
-        RegisterServices(services);
+        RegisterServices(services, configuration);
 
         return self;
     }
 
-    private static void RegisterServices(IServiceCollection services)
+    private static void RegisterServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<StartupHealthCheck>();
 
@@ -63,5 +66,8 @@ static partial class Program
         services.AddScoped<IReleasePipelineAdapter, ReleasePipelineAdapter>();
         services.AddScoped<IBuildPipelineAdapter, BuildPipelineAdapter>();
         services.AddScoped<ISprintAdapter, SprintAdapter>();
+
+        services.SetupKafkaConsumer<VGManagerAdapterCommand>(configuration, Constants.SettingKeys.AdapterCommandResponseConsumer, false);
+        services.SetupKafkaProducer<VGManagerAdapterCommandResponse>(configuration, Constants.SettingKeys.VGManagerAdapterCommandResponseProducer);
     }
 }
