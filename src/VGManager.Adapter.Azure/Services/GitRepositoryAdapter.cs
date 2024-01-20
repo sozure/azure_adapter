@@ -2,8 +2,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using System.Text;
 using System.Text.Json;
-using VGManager.Adapter.Azure.Services.Entities;
 using VGManager.Adapter.Azure.Services.Interfaces;
+using VGManager.Adapter.Azure.Services.Requests;
+using VGManager.Adapter.Models.Kafka;
+using VGManager.Adapter.Models.Requests;
 using YamlDotNet.RepresentationModel;
 
 namespace VGManager.Adapter.Azure.Services;
@@ -28,56 +30,83 @@ public class GitRepositoryAdapter : IGitRepositoryAdapter
     }
 
     public async Task<IEnumerable<GitRepository>> GetAllAsync(
-        string organization,
-        string project,
-        string pat,
+        VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
     {
-        _logger.LogInformation("Request git repositories from {project} azure project.", project);
-        _clientProvider.Setup(organization, pat);
+        ExtendedBaseRequest? payload = null!;
+        try
+        {
+            payload = JsonSerializer.Deserialize<ExtendedBaseRequest>(command.Payload);
+        }
+        catch (Exception)
+        {
+            return Enumerable.Empty<GitRepository>();
+        }
+
+        if (payload is null)
+        {
+            return Enumerable.Empty<GitRepository>();
+        }
+
+        _logger.LogInformation("Request git repositories from {project} azure project.", payload.Project);
+        _clientProvider.Setup(payload.Organization, payload.PAT);
         using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
         var repositories = await client.GetRepositoriesAsync(cancellationToken: cancellationToken);
-        return repositories.Where(repo => (!repo.IsDisabled ?? false) && repo.ProjectReference.Name == project).ToList();
+        return repositories.Where(repo => (!repo.IsDisabled ?? false) && repo.ProjectReference.Name == payload.Project).ToList();
     }
 
     public async Task<List<string>> GetVariablesFromConfigAsync(
-        GitRepositoryEntity gitRepositoryEntity,
-        string pat,
+        VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
     {
-        var project = gitRepositoryEntity.Project;
-        var repositoryId = gitRepositoryEntity.RepositoryId;
+        GitRepositoryRequest<string>? payload;
+        try
+        {
+            payload = JsonSerializer.Deserialize<GitRepositoryRequest<string>>(command.Payload);
+        }
+        catch (Exception)
+        {
+            return Enumerable.Empty<string>().ToList();
+        }
+
+        if (payload is null)
+        {
+            return Enumerable.Empty<string>().ToList();
+        }
+
+        var project = payload.Project;
+        var repositoryId = payload.RepositoryId;
 
         _logger.LogInformation(
             "Requesting configurations from {project} azure project, {repositoryId} git repository.",
             project,
             repositoryId
             );
-        _clientProvider.Setup(gitRepositoryEntity.Organization, pat);
+        _clientProvider.Setup(payload.Organization, payload.PAT);
         using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
         var gitVersionDescriptor = new GitVersionDescriptor
         {
             VersionType = GitVersionType.Branch,
-            Version = gitRepositoryEntity.Branch
+            Version = payload.Branch
         };
 
         var item = await client.GetItemTextAsync(
             project: project,
             repositoryId: repositoryId,
-            path: gitRepositoryEntity.FilePath,
+            path: payload.FilePath,
             versionDescriptor: gitVersionDescriptor,
             cancellationToken: cancellationToken
             );
 
-        if (gitRepositoryEntity.FilePath.EndsWith(".json"))
+        if (payload.FilePath.EndsWith(".json"))
         {
             var json = await GetJsonObjectAsync(item, cancellationToken);
-            var result = GetKeysFromJson(json, gitRepositoryEntity.Exceptions ?? Enumerable.Empty<string>(), gitRepositoryEntity.Delimiter);
+            var result = GetKeysFromJson(json, payload.Exceptions ?? Enumerable.Empty<string>(), payload.Delimiter);
             return result;
         }
-        else if (gitRepositoryEntity.FilePath.EndsWith(".yaml"))
+        else if (payload.FilePath.EndsWith(".yaml"))
         {
             return GetKeysFromYaml(item);
         }

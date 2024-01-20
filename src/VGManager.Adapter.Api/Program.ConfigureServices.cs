@@ -1,4 +1,5 @@
 using Microsoft.OpenApi.Models;
+using SMP.Soffie.NeptunAdapter.Services.MapperProfiles;
 using System.Reflection;
 using VGManager.Adapter.Api;
 using VGManager.Adapter.Api.HealthChecks;
@@ -43,7 +44,8 @@ static partial class Program
             .AddCheck<StartupHealthCheck>(nameof(StartupHealthCheck), tags: new[] { "startup" });
 
         services.AddAutoMapper(
-            typeof(Program)
+            typeof(Program),
+            typeof(CommandMessageProfile)
         );
 
         RegisterServices(services, configuration);

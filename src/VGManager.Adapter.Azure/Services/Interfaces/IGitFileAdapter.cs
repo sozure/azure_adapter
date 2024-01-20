@@ -1,26 +1,17 @@
 using VGManager.Adapter.Models.Kafka;
+using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IGitFileAdapter
 {
-    Task<(AdapterStatus, IEnumerable<string>)> GetFilePathAsync(
-        //string organization,
-        //string pat,
-        //string repositoryId,
-        //string fileName,
-        //string branch,
+    Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetFilePathAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
 
-    Task<(AdapterStatus, IEnumerable<string>)> GetConfigFilesAsync(
-        //string organization,
-        //string pat,
-        //string repositoryId,
-        //string? extension,
-        //string branch,
+    Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetConfigFilesAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );

@@ -34,7 +34,7 @@ public class CommandProcessorService : ICommandProcessorService
         IProfileAdapter profileAdapter,
         IProjectAdapter projectAdapter,
         IReleasePipelineAdapter releasePipelineAdapter,
-        IVariableGroupAdapter variableGroupAdapter, 
+        IVariableGroupAdapter variableGroupAdapter,
         IMapper mapper,
         ILogger<CommandProcessorService> logger
     )
@@ -84,7 +84,7 @@ public class CommandProcessorService : ICommandProcessorService
                 CommandTypes.GetVariableGroupsRequest => await _releasePipelineAdapter.GetVariableGroupsAsync(vgManagerAdapterCommandMessage, cancellationToken),
                 CommandTypes.GetProjectsRequest => await _projectAdapter.GetProjectsAsync(vgManagerAdapterCommandMessage, cancellationToken),
                 _ => throw new InvalidOperationException($"Invalid command type: {commandMessage.CommandType}"),
-            } ; 
+            };
 
             if (result is not null)
             {

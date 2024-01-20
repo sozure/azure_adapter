@@ -1,40 +1,25 @@
 using Microsoft.TeamFoundation.Build.WebApi;
 using VGManager.Adapter.Models.Kafka;
+using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IBuildPipelineAdapter
 {
-    Task<BuildDefinitionReference> GetBuildPipelineAsync(
-        //string organization,
-        //string pat,
-        //string project,
-        //int id,
+    Task<BaseResponse<BuildDefinitionReference>> GetBuildPipelineAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
-    Task<IEnumerable<BuildDefinitionReference>> GetBuildPipelinesAsync(
-        //string organization,
-        //string pat,
-        //string project,
+    Task<BaseResponse<IEnumerable<BuildDefinitionReference>>> GetBuildPipelinesAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
-    Task<AdapterStatus> RunBuildPipelineAsync(
-        //string organization,
-        //string pat,
-        //string project,
-        //int definitionId,
-        //string sourceBranch,
+    Task<BaseResponse<AdapterStatus>> RunBuildPipelineAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
-    Task<AdapterStatus> RunBuildPipelinesAsync(
-        //string organization,
-        //string pat,
-        //string project,
-        //IEnumerable<IDictionary<string, string>> pipelines,
+    Task<BaseResponse<AdapterStatus>> RunBuildPipelinesAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );

@@ -1,7 +1,12 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
+using System.Text.Json;
+using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
+using VGManager.Adapter.Azure.Services.Requests;
+using VGManager.Adapter.Models.Kafka;
+using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
@@ -19,52 +24,62 @@ public class GitFileAdapter : IGitFileAdapter
         _logger = logger;
     }
 
-    public async Task<(AdapterStatus, IEnumerable<string>)> GetFilePathAsync(
-        string organization,
-        string pat,
-        string repositoryId,
-        string fileName,
-        string branch,
+    public async Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetFilePathAsync(
+        VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
     {
+        GitFileBaseRequest<string>? payload = null;
         try
         {
-            _logger.LogInformation("Request file path from {project} git project.", repositoryId);
-            _clientProvider.Setup(organization, pat);
-            return await GetFilePathAsync(branch, repositoryId, fileName, cancellationToken);
+            payload = JsonSerializer.Deserialize<GitFileBaseRequest<string>>(command.Payload);
+
+            if (payload is null)
+            {
+                return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
+            }
+
+            _logger.LogInformation("Request file path from {project} git project.", payload.RepositoryId);
+            _clientProvider.Setup(payload.Organization, payload.PAT);
+            var result = await GetFilePathAsync(payload.Branch, payload.RepositoryId, payload.AdditionalInformation ?? string.Empty, cancellationToken);
+            return ResponseProvider.GetResponse(result);
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} git project is not found.", repositoryId);
-            return (AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>());
+            _logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId ?? "Unknown");
+            return ResponseProvider.GetResponse((AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>()));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting file path from {project} git project.", repositoryId);
-            return (AdapterStatus.Unknown, Enumerable.Empty<string>());
+            _logger.LogError(ex, "Error getting file path from {project} git project.", payload?.RepositoryId ?? "Unknown");
+            return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
         }
     }
 
-    public async Task<(AdapterStatus, IEnumerable<string>)> GetConfigFilesAsync(
-        string organization,
-        string pat,
-        string repositoryId,
-        string? extension,
-        string branch,
+    public async Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetConfigFilesAsync(
+        VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
     {
+        GitFileBaseRequest<string>? payload = null;
         try
         {
-            _logger.LogInformation("Get config files from {project} git project.", repositoryId);
-            _clientProvider.Setup(organization, pat);
-            return await GetConfigFilesAsync(branch, repositoryId, extension, cancellationToken);
+            payload = JsonSerializer.Deserialize<GitFileBaseRequest<string>>(command.Payload);
+
+            if (payload is null)
+            {
+                return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
+            }
+
+            _logger.LogInformation("Get config files from {project} git project.", payload.RepositoryId);
+            _clientProvider.Setup(payload.Organization, payload.PAT);
+            var result = await GetConfigFilesAsync(payload.Branch, payload.RepositoryId, payload.AdditionalInformation ?? string.Empty, cancellationToken);
+            return ResponseProvider.GetResponse(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting config files from {project} git project.", repositoryId);
-            return (AdapterStatus.Unknown, Enumerable.Empty<string>());
+            _logger.LogError(ex, "Error getting config files from {project} git project.", payload?.RepositoryId ?? "Unknown");
+            return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
         }
     }
 

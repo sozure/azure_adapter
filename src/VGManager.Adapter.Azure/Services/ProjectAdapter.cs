@@ -5,9 +5,11 @@ using Microsoft.VisualStudio.Services.WebApi;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using VGManager.Adapter.Azure.Services.Entities;
 using VGManager.Adapter.Azure.Services.Interfaces;
+using VGManager.Adapter.Azure.Services.Requests;
+using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Models;
+using VGManager.Adapter.Models.Requests;
 using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
@@ -21,20 +23,36 @@ public class ProjectAdapter : IProjectAdapter
         _logger = logger;
     }
 
-    public async Task<AdapterResponseModel<IEnumerable<ProjectEntity>>> GetProjectsAsync(string baseUrl, string pat, CancellationToken cancellationToken = default)
+    public async Task<AdapterResponseModel<IEnumerable<ProjectRequest>>> GetProjectsAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        )
     {
+        BaseRequest? payload;
         try
         {
+            payload = JsonSerializer.Deserialize<BaseRequest>(command.Payload);
+
+            if (payload is null)
+            {
+                return new AdapterResponseModel<IEnumerable<ProjectRequest>>()
+                {
+                    Status = AdapterStatus.Unknown,
+                    Data = Enumerable.Empty<ProjectRequest>()
+                };
+            }
+
+            var baseUrl = $"https://dev.azure.com/{payload.Organization}";
             _logger.LogInformation("Get projects from {baseUrl}.", baseUrl);
-            await GetConnectionAsync(baseUrl, pat);
+            await GetConnectionAsync(baseUrl, payload.PAT);
             var teamProjectReferences = await _projectHttpClient!.GetProjects();
             _projectHttpClient.Dispose();
 
-            var projects = new List<ProjectEntity>();
+            var projects = new List<ProjectRequest>();
 
             foreach (var project in teamProjectReferences)
             {
-                var subscriptionIds = await GetSubscriptionIds(baseUrl, project.Name, pat);
+                var subscriptionIds = await GetSubscriptionIds(baseUrl, project.Name, payload.PAT, cancellationToken);
                 projects.Add(new()
                 {
                     Project = project,
@@ -64,7 +82,12 @@ public class ProjectAdapter : IProjectAdapter
         }
     }
 
-    private async Task<IEnumerable<string>> GetSubscriptionIds(string baseUrl, string projectName, string personalAccessToken)
+    private async Task<IEnumerable<string>> GetSubscriptionIds(
+        string baseUrl,
+        string projectName,
+        string personalAccessToken,
+        CancellationToken cancellationToken
+        )
     {
         var result = new List<string>();
         using var client = new HttpClient();
@@ -78,14 +101,14 @@ public class ProjectAdapter : IProjectAdapter
             );
 
         // Make a request to get the list of service connections
-        var response = await client.GetAsync("serviceendpoint/endpoints?api-version=6.0");
+        var response = await client.GetAsync("serviceendpoint/endpoints?api-version=6.0", cancellationToken: cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
             // Read and display the response
-            var responseBody = await response.Content.ReadAsStringAsync();
-            var json = JsonSerializer.Deserialize<JsonObject>(responseBody) ?? new JsonObject();
-            var jsonArray = json["value"]?.AsArray() ?? new JsonArray();
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            var json = JsonSerializer.Deserialize<JsonObject>(responseBody) ?? [];
+            var jsonArray = json["value"]?.AsArray() ?? [];
             foreach (var item in jsonArray)
             {
                 var subscriptionId = item?["data"]?["subscriptionId"] ?? string.Empty;
@@ -116,7 +139,7 @@ public class ProjectAdapter : IProjectAdapter
         }
     }
 
-    private static AdapterResponseModel<IEnumerable<ProjectEntity>> GetResult(AdapterStatus status, IEnumerable<ProjectEntity> projects)
+    private static AdapterResponseModel<IEnumerable<ProjectRequest>> GetResult(AdapterStatus status, IEnumerable<ProjectRequest> projects)
     {
         return new()
         {
@@ -125,12 +148,12 @@ public class ProjectAdapter : IProjectAdapter
         };
     }
 
-    private static AdapterResponseModel<IEnumerable<ProjectEntity>> GetResult(AdapterStatus status)
+    private static AdapterResponseModel<IEnumerable<ProjectRequest>> GetResult(AdapterStatus status)
     {
         return new()
         {
             Status = status,
-            Data = Enumerable.Empty<ProjectEntity>()
+            Data = Enumerable.Empty<ProjectRequest>()
         };
     }
 }

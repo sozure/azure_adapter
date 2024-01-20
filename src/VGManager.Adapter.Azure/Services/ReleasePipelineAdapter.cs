@@ -5,7 +5,10 @@ using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi.Clients;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi.Contracts;
+using System.Text.Json;
 using VGManager.Adapter.Azure.Services.Interfaces;
+using VGManager.Adapter.Azure.Services.Requests;
+using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
@@ -25,18 +28,25 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
     }
 
     public async Task<(AdapterStatus, IEnumerable<string>)> GetEnvironmentsAsync(
-        string organization,
-        string pat,
-        string project,
-        string repositoryName,
-        string configFile,
+        VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
     {
+        ReleasePipelineRequest? payload = null!;
         try
         {
+            payload = JsonSerializer.Deserialize<ReleasePipelineRequest>(command.Payload);
+
+            if (payload is null)
+            {
+                return (AdapterStatus.Unknown, Enumerable.Empty<string>());
+            }
+
+            var project = payload.Project;
+            var repositoryName = payload.RepositoryName;
+
             _logger.LogInformation("Request environments for {repository} git repository from {project} azure project.", repositoryName, project);
-            var definition = await GetReleaseDefinitionAsync(organization, pat, project, repositoryName, configFile, cancellationToken);
+            var definition = await GetReleaseDefinitionAsync(payload.Organization, payload.PAT, project, repositoryName, payload.ConfigFile, cancellationToken);
             var rawResult = definition?.Environments.Select(env => env.Name).ToList() ?? Enumerable.Empty<string>();
             var result = new List<string>();
 
@@ -54,33 +64,40 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} azure project is not found.", project);
+            _logger.LogError(ex, "{project} azure project is not found.", payload?.Project ?? "Unknown");
             return (AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting git branches from {project} azure project.", project);
+            _logger.LogError(ex, "Error getting git branches from {project} azure project.", payload?.Project ?? "Unknown");
             return (AdapterStatus.Unknown, Enumerable.Empty<string>());
         }
     }
 
     public async Task<(AdapterStatus, IEnumerable<(string, string)>)> GetVariableGroupsAsync(
-        string organization,
-        string pat,
-        string project,
-        string repositoryName,
-        string configFile,
+        VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
     {
+        ReleasePipelineRequest? payload = null!;
         try
         {
+            payload = JsonSerializer.Deserialize<ReleasePipelineRequest>(command.Payload);
+
+            if (payload is null)
+            {
+                return (AdapterStatus.Unknown, Enumerable.Empty<(string, string)>());
+            }
+
+            var project = payload.Project;
+            var repositoryName = payload.RepositoryName;
+
             _logger.LogInformation(
                 "Request corresponding variable groups for {repository} repository, {project} azure project.",
                 repositoryName,
                 project
                 );
-            var definition = await GetReleaseDefinitionAsync(organization, pat, project, repositoryName, configFile, cancellationToken);
+            var definition = await GetReleaseDefinitionAsync(payload.Organization, payload.PAT, project, repositoryName, payload.ConfigFile, cancellationToken);
 
             if (definition is null)
             {
@@ -93,7 +110,7 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} azure project is not found.", project);
+            _logger.LogError(ex, "{project} azure project is not found.", payload?.Project ?? "Unknown");
             return (AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<(string, string)>());
         }
         catch (Exception ex)
@@ -101,8 +118,8 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
             _logger.LogError(
                 ex,
                 "Error getting corresponding variable groups for {repository} repository, {project} azure project.",
-                repositoryName,
-                project
+                payload?.RepositoryName ?? "Unknown",
+                payload?.Project ?? "Unknown"
                 );
             return (AdapterStatus.Unknown, Enumerable.Empty<(string, string)>());
         }

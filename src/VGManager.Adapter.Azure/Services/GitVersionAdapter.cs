@@ -1,98 +1,127 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
-using VGManager.Adapter.Azure.Services.Entities;
+using System.Text.Json;
 using VGManager.Adapter.Azure.Services.Interfaces;
+using VGManager.Adapter.Azure.Services.Requests;
+using VGManager.Adapter.Models.Kafka;
+using VGManager.Adapter.Models.Requests;
 using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
 
 public class GitVersionAdapter : IGitVersionAdapter
 {
+    private readonly ISprintAdapter _sprintAdapter;
     private readonly IHttpClientProvider _clientProvider;
     private readonly ILogger _logger;
 
-    public GitVersionAdapter(IHttpClientProvider clientProvider, ILogger<GitVersionAdapter> logger)
+    public GitVersionAdapter(
+        ISprintAdapter sprintAdapter,
+        IHttpClientProvider clientProvider,
+        ILogger<GitVersionAdapter> logger
+        )
     {
+        _sprintAdapter = sprintAdapter;
         _clientProvider = clientProvider;
         _logger = logger;
     }
 
     public async Task<(AdapterStatus, IEnumerable<string>)> GetBranchesAsync(
-        string organization,
-        string pat,
-        string repositoryId,
+        VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
     {
+        GitFileBaseRequest<string>? payload = null;
         try
         {
-            _clientProvider.Setup(organization, pat);
-            _logger.LogInformation("Request git branches from {project} git project.", repositoryId);
+            payload = JsonSerializer.Deserialize<GitFileBaseRequest<string>>(command.Payload);
+
+            if (payload is null)
+            {
+                return (AdapterStatus.Unknown, Enumerable.Empty<string>());
+            }
+
+            _clientProvider.Setup(payload.Organization, payload.PAT);
+            _logger.LogInformation("Request git branches from {project} git project.", payload.RepositoryId);
             using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
-            var branches = await client.GetBranchesAsync(repositoryId, cancellationToken: cancellationToken);
+            var branches = await client.GetBranchesAsync(payload.RepositoryId, cancellationToken: cancellationToken);
             return (AdapterStatus.Success, branches.Select(branch => branch.Name).ToList());
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} git project is not found.", repositoryId);
+            _logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId ?? "Unknown");
             return (AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting git branches from {project} git project.", repositoryId);
+            _logger.LogError(ex, "Error getting git branches from {project} git project.", payload?.RepositoryId ?? "Unknown");
             return (AdapterStatus.Unknown, Enumerable.Empty<string>());
         }
     }
 
     public async Task<(AdapterStatus, IEnumerable<string>)> GetTagsAsync(
-        string organization,
-        string pat,
-        Guid repositoryId,
+        VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
     {
+        GitFileBaseRequest<Guid>? payload = null;
+
         try
         {
-            _clientProvider.Setup(organization, pat);
-            _logger.LogInformation("Request git tags from {project} git project.", repositoryId);
+            payload = JsonSerializer.Deserialize<GitFileBaseRequest<Guid>>(command.Payload);
+
+            if (payload is null)
+            {
+                return (AdapterStatus.Unknown, Enumerable.Empty<string>());
+            }
+
+            _clientProvider.Setup(payload.Organization, payload.PAT);
+            _logger.LogInformation("Request git tags from {project} git project.", payload.RepositoryId);
             using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
-            var tags = await client.GetTagRefsAsync(repositoryId);
+            var tags = await client.GetTagRefsAsync(payload.RepositoryId);
 
             return (AdapterStatus.Success, tags.Select(tag => tag.Name).ToList());
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} git project is not found.", repositoryId);
+            _logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId);
             return (AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting git tags from {project} git project.", repositoryId);
+            _logger.LogError(ex, "Error getting git tags from {project} git project.", payload?.RepositoryId);
             return (AdapterStatus.Unknown, Enumerable.Empty<string>());
         }
     }
 
     public async Task<(AdapterStatus, string)> CreateTagAsync(
-        CreateTagEntity tagEntity,
-        string defaultBranch,
-        string sprint,
+        VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
     {
-        var repositoryId = tagEntity.RepositoryId;
-        var project = tagEntity.Project;
+        CreateTagRequest? payload = null;
+
         try
         {
-            var tag = tagEntity.TagName;
-            _clientProvider.Setup(tagEntity.Organization, tagEntity.PAT);
+            payload = JsonSerializer.Deserialize<CreateTagRequest>(command.Payload);
+
+            if (payload is null)
+            {
+                return (AdapterStatus.Unknown, string.Empty);
+            }
+
+            var repositoryId = payload.RepositoryId;
+            var project = payload.Project;
+            var tag = payload.TagName;
+            _clientProvider.Setup(payload.Organization, payload.PAT);
             _logger.LogInformation("Request git tags from {project} git project.", repositoryId);
             using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
-
+            var sprint = await _sprintAdapter.GetCurrentSprintAsync(payload.Project, cancellationToken);
             var branch = await client.GetBranchAsync(
                 project,
                 repositoryId,
-                defaultBranch,
+                payload.DefaultBranch,
                 cancellationToken: cancellationToken
                 );
 
@@ -103,7 +132,7 @@ public class GitVersionAdapter : IGitVersionAdapter
                 TaggedBy = new GitUserDate
                 {
                     Date = DateTime.UtcNow,
-                    Name = tagEntity.UserName
+                    Name = payload.UserName
                 },
                 TaggedObject = new GitObject { ObjectId = branch.Commit.CommitId }
             };
@@ -113,12 +142,12 @@ public class GitVersionAdapter : IGitVersionAdapter
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} git project is not found.", repositoryId);
+            _logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId);
             return (AdapterStatus.Unknown, string.Empty);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting git tags from {project} git project.", repositoryId);
+            _logger.LogError(ex, "Error getting git tags from {project} git project.", payload?.RepositoryId);
             return (AdapterStatus.Unknown, string.Empty);
         }
     }
