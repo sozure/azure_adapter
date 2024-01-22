@@ -6,15 +6,15 @@ namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IGitVersionAdapter
 {
-    Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetBranchesAsync(
+    Task<BaseResponse<Dictionary<string, object>>> GetBranchesAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
-    Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetTagsAsync(
+    Task<BaseResponse<Dictionary<string, object>>> GetTagsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
-    Task<BaseResponse<(AdapterStatus, string)>> CreateTagAsync(
+    Task<BaseResponse<Dictionary<string, object>>> CreateTagAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );

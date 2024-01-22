@@ -30,10 +30,14 @@ public static class ResponseProvider
         Data = result
     };
 
-    public static BaseResponse<(AdapterStatus, IEnumerable<string>)> GetResponse((AdapterStatus, IEnumerable<string>) result)
+    public static BaseResponse<Dictionary<string, object>> GetResponse((AdapterStatus, IEnumerable<string>) result)
     => new()
     {
-        Data = result
+        Data = new Dictionary<string, object>()
+        {
+            ["Status"] = result.Item1,
+            ["Data"] = result.Item2
+        }
     };
 
     public static BaseResponse<List<string>> GetResponse(List<string> result)
@@ -48,10 +52,14 @@ public static class ResponseProvider
             Data = result
         };
 
-    public static BaseResponse<(AdapterStatus, string)> GetResponse((AdapterStatus, string) result)
+    public static BaseResponse<Dictionary<string, object>> GetResponse((AdapterStatus, string) result)
         => new()
         {
-            Data = result
+            Data = new Dictionary<string, object>()
+            {
+                ["Status"] = result.Item1,
+                ["Data"] = result.Item2
+            }
         };
 
     public static BaseResponse<Profile?> GetResponse(Profile? result)
@@ -68,11 +76,27 @@ public static class ResponseProvider
             Data = result
         };
 
-    public static BaseResponse<(AdapterStatus, IEnumerable<(string, string)>)> GetResponse(
+    public static BaseResponse<Dictionary<string, object>> GetResponse(
         (AdapterStatus, IEnumerable<(string, string)>) result
         )
-        => new()
+    {
+        var res = new List<Dictionary<string, string>>();
+        foreach(var item in result.Item2)
         {
-            Data = result
+            res.Add(new()
+            {
+                ["Name"] = item.Item1,
+                ["Type"] = item.Item2
+            });
+        }
+        return new()
+        {
+            Data = new Dictionary<string, object>()
+            {
+                ["Status"] = result.Item1,
+                ["Data"] = res
+            }
         };
+    }
 }
+
