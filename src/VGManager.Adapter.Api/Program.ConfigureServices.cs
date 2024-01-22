@@ -9,8 +9,8 @@ using VGManager.Adapter.Azure.Services;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Interfaces;
-using VGManager.Adapter.Kafka.Extensions;
 using VGManager.Adapter.Models.Kafka;
+using VGManager.Communication.Kafka.Extensions;
 
 static partial class Program
 {

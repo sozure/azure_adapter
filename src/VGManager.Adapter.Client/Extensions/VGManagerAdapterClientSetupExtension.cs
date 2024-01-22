@@ -2,8 +2,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VGManager.Adapter.Client.Configurations;
 using VGManager.Adapter.Client.Interfaces;
-using VGManager.Adapter.Kafka.RequestResponse.Extensions;
 using VGManager.Adapter.Models.Kafka;
+using VGManager.Communication.Kafka.RequestResponse.Extensions;
 
 namespace VGManager.Adapter.Client.Extensions;
 

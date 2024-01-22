@@ -19,10 +19,9 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.205.1" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Entities\" />
+        <PackageReference Include="VGManager.Communication.Models" Version="1.0.0" />
+            <PackageReference Include="VGManager.Communication.Kafka" Version="1.0.0" />
+            <PackageReference Include="VGManager.Communication.Kafka.ReqResp" Version="1.0.0" />
     </ItemGroup>
     
     

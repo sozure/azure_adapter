@@ -34,7 +34,6 @@
     </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VGManager.Adapter.Kafka\VGManager.Adapter.Kafka.csproj" />
     <ProjectReference Include="..\VGManager.Adapter.Models\VGManager.Adapter.Models.csproj" />
   </ItemGroup>
 

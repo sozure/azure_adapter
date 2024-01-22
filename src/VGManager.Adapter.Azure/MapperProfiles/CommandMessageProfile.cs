@@ -1,6 +1,6 @@
 using AutoMapper;
-using VGManager.Adapter.Models;
 using VGManager.Adapter.Models.Kafka;
+using VGManager.Communication.Models;
 
 namespace VGManager.Adapter.Azure;
 

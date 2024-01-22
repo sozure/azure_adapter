@@ -6,8 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  
+
   <ItemGroup>
-    <ProjectReference Include="..\VGManager.Adapter.Kafka.RequestResponse\VGManager.Adapter.Kafka.RequestResponse.csproj" />
+    <ProjectReference Include="..\VGManager.Adapter.Models\VGManager.Adapter.Models.csproj" />
   </ItemGroup>
 
 </Project>
