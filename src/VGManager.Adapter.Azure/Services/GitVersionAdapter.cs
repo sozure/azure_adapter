@@ -142,8 +142,8 @@ public class GitVersionAdapter : IGitVersionAdapter
 
             var createdTag = await client.CreateAnnotatedTagAsync(gitAnnotatedTag, project, repositoryId, cancellationToken: cancellationToken);
             return ResponseProvider.GetResponse(
-                createdTag is not null ? 
-                (AdapterStatus.Success, $"refs/tags/{tag}") : 
+                createdTag is not null ?
+                (AdapterStatus.Success, $"refs/tags/{tag}") :
                 (AdapterStatus.Unknown, string.Empty)
                 );
         }

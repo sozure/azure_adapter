@@ -1,8 +1,8 @@
 using AutoMapper;
-using VGManager.Adapter.Models;
 using VGManager.Adapter.Models.Kafka;
+using VGManager.Communication.Models;
 
-namespace SMP.Soffie.NeptunAdapter.Services.MapperProfiles;
+namespace VGManager.Adapter.Azure;
 
 public class CommandMessageProfile : Profile
 {

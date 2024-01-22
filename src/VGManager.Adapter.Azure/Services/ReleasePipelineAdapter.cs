@@ -63,7 +63,7 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
             }
 
             return ResponseProvider.GetResponse((
-                definition is null ? AdapterStatus.Unknown : AdapterStatus.Success, 
+                definition is null ? AdapterStatus.Unknown : AdapterStatus.Success,
                 result
                 ));
         }

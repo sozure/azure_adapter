@@ -3,9 +3,9 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Interfaces;
-using VGManager.Adapter.Kafka.Interfaces;
-using VGManager.Adapter.Models;
 using VGManager.Adapter.Models.Kafka;
+using VGManager.Communication.Kafka.Interfaces;
+using VGManager.Communication.Models;
 
 namespace VGManager.Adapter.Azure;
 
