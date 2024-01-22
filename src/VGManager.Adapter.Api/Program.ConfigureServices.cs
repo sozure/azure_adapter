@@ -67,6 +67,8 @@ static partial class Program
         services.SetupKafkaConsumer<VGManagerAdapterCommand>(configuration, Constants.SettingKeys.VGManagerAdapterCommandConsumer, false);
         services.SetupKafkaProducer<VGManagerAdapterCommandResponse>(configuration, Constants.SettingKeys.VGManagerAdapterCommandResponseProducer);
 
+        services.AddScoped<ICommandProcessorService, CommandProcessorService>();
+
         services.AddScoped<IVariableGroupAdapter, VariableGroupAdapter>();
         services.AddScoped<IProjectAdapter, ProjectAdapter>();
         services.AddScoped<IKeyVaultAdapter, KeyVaultAdapter>();
@@ -78,7 +80,6 @@ static partial class Program
         services.AddScoped<IReleasePipelineAdapter, ReleasePipelineAdapter>();
         services.AddScoped<IBuildPipelineAdapter, BuildPipelineAdapter>();
         services.AddScoped<ISprintAdapter, SprintAdapter>();
-        services.AddScoped<ICommandProcessorService, CommandProcessorService>();
         services.AddHostedService<CommandProcessorBackgroundService>();
     }
 }

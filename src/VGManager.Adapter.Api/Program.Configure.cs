@@ -1,8 +1,8 @@
 using CorrelationId;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using VGManager.Adapter.Api;
-using VGManager.Adapter.Api.Extensions;
 using VGManager.Adapter.Api.HealthChecks;
+using VGManager.Communication.Kafka.Extensions;
 
 static partial class Program
 {
