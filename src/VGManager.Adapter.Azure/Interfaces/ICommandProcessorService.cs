@@ -1,4 +1,4 @@
-using VGManager.Adapter.Models;
+using VGManager.Communication.Models;
 
 namespace VGManager.Adapter.Interfaces;
 

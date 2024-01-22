@@ -6,7 +6,7 @@ public static class Constants
     {
         public const string HealthChecksSettings = nameof(HealthChecksSettings);
         public const string VGManagerAdapterCommandResponseProducer = nameof(VGManagerAdapterCommandResponseProducer);
-        public const string AdapterCommandResponseConsumer = nameof(AdapterCommandResponseConsumer);
+        public const string VGManagerAdapterCommandConsumer = nameof(VGManagerAdapterCommandConsumer);
     }
 
     public static class Cors

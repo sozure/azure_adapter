@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using VGManager.Adapter.Client.Configurations;
 using VGManager.Adapter.Client.Interfaces;
-using VGManager.Adapter.Kafka.Configurations;
-using VGManager.Adapter.Kafka.RequestResponse.Interfaces;
 using VGManager.Adapter.Models.Kafka;
+using VGManager.Communication.Kafka.Configurations;
+using VGManager.Communication.Kafka.RequestResponse.Interfaces;
 
 namespace VGManager.Adapter.Client;
 

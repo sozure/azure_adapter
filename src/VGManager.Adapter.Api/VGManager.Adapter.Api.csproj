@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VGManager.Adapter.Azure\VGManager.Adapter.Azure.csproj" />
-    <ProjectReference Include="..\VGManager.Adapter.Kafka\VGManager.Adapter.Kafka.csproj" />
   </ItemGroup>
 
     <ItemGroup>

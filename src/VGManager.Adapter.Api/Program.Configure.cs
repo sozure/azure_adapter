@@ -1,5 +1,7 @@
+using CorrelationId;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using VGManager.Adapter.Api;
+using VGManager.Adapter.Api.Extensions;
 using VGManager.Adapter.Api.HealthChecks;
 
 static partial class Program
@@ -29,6 +31,9 @@ static partial class Program
         });
 
         RegisterStartupReadiness(app);
+
+        app.UseCorrelationIdValidation();
+        app.UseCorrelationId();
 
         app.UseSwagger();
         app.UseSwaggerUI();

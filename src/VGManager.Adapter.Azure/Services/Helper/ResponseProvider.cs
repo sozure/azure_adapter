@@ -20,21 +20,21 @@ public static class ResponseProvider
 
     public static BaseResponse<BuildDefinitionReference> GetResponse(BuildDefinitionReference result)
     => new()
-        {
-            Data = result
-        };
+    {
+        Data = result
+    };
 
     public static BaseResponse<IEnumerable<BuildDefinitionReference>> GetResponse(IEnumerable<BuildDefinitionReference> result)
     => new()
-        {
-            Data = result
-        };
+    {
+        Data = result
+    };
 
     public static BaseResponse<(AdapterStatus, IEnumerable<string>)> GetResponse((AdapterStatus, IEnumerable<string>) result)
     => new()
-        {
-            Data = result
-        };
+    {
+        Data = result
+    };
 
     public static BaseResponse<List<string>> GetResponse(List<string> result)
         => new()

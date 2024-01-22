@@ -1,6 +1,6 @@
 using VGManager.Adapter.Interfaces;
-using VGManager.Adapter.Kafka.Interfaces;
 using VGManager.Adapter.Models.Kafka;
+using VGManager.Communication.Kafka.Interfaces;
 
 namespace VGManager.Adapter.Api.BackgroundServices;
 
@@ -20,6 +20,7 @@ public class CommandProcessorBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        Console.WriteLine("Consume");
         await _consumerService.ConsumeAsync(stoppingToken, async (message) =>
         {
             using var scope = _serviceProvider.CreateScope();
