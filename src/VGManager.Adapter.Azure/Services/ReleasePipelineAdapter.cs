@@ -29,7 +29,7 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
         _logger = logger;
     }
 
-    public async Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetEnvironmentsAsync(
+    public async Task<BaseResponse<Dictionary<string, object>>> GetEnvironmentsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -79,7 +79,7 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
         }
     }
 
-    public async Task<BaseResponse<(AdapterStatus, IEnumerable<(string, string)>)>> GetVariableGroupsAsync(
+    public async Task<BaseResponse<Dictionary<string, object>>> GetVariableGroupsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )

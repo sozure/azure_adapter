@@ -24,7 +24,7 @@ public class GitFileAdapter : IGitFileAdapter
         _logger = logger;
     }
 
-    public async Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetFilePathAsync(
+    public async Task<BaseResponse<Dictionary<string, object>>> GetFilePathAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -56,7 +56,7 @@ public class GitFileAdapter : IGitFileAdapter
         }
     }
 
-    public async Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetConfigFilesAsync(
+    public async Task<BaseResponse<Dictionary<string, object>>> GetConfigFilesAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )

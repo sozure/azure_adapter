@@ -6,12 +6,12 @@ namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IReleasePipelineAdapter
 {
-    Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetEnvironmentsAsync(
+    Task<BaseResponse<Dictionary<string, object>>> GetEnvironmentsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
 
-    Task<BaseResponse<(AdapterStatus, IEnumerable<(string, string)>)>> GetVariableGroupsAsync(
+    Task<BaseResponse<Dictionary<string, object>>> GetVariableGroupsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );

@@ -29,7 +29,7 @@ public class GitVersionAdapter : IGitVersionAdapter
         _logger = logger;
     }
 
-    public async Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetBranchesAsync(
+    public async Task<BaseResponse<Dictionary<string, object>>> GetBranchesAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -63,7 +63,7 @@ public class GitVersionAdapter : IGitVersionAdapter
         }
     }
 
-    public async Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetTagsAsync(
+    public async Task<BaseResponse<Dictionary<string, object>>> GetTagsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -98,7 +98,7 @@ public class GitVersionAdapter : IGitVersionAdapter
         }
     }
 
-    public async Task<BaseResponse<(AdapterStatus, string)>> CreateTagAsync(
+    public async Task<BaseResponse<Dictionary<string, object>>> CreateTagAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )

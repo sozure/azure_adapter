@@ -6,12 +6,12 @@ namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IGitFileAdapter
 {
-    Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetFilePathAsync(
+    Task<BaseResponse<Dictionary<string, object>>> GetFilePathAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
 
-    Task<BaseResponse<(AdapterStatus, IEnumerable<string>)>> GetConfigFilesAsync(
+    Task<BaseResponse<Dictionary<string, object>>> GetConfigFilesAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
