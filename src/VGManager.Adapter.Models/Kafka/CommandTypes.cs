@@ -17,8 +17,4 @@ public static class CommandTypes
     public const string GetEnvironmentsRequest = nameof(GetEnvironmentsRequest);
     public const string GetVariableGroupsRequest = nameof(GetVariableGroupsRequest);
     public const string GetProjectsRequest = nameof(GetProjectsRequest);
-    //public const string GetSemestersRequest = "GetSemestersRequest";
-    //public const string GetCoursesRequest = "GetCoursesRequest";
-    //public const string GetTimetableRequest = "GetTimetableRequest";
-    //public const string GetStudiesRequest = "GetStudiesRequest";
 }
