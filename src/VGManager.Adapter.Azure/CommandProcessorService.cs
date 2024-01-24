@@ -136,6 +136,38 @@ public class CommandProcessorService : ICommandProcessorService
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
+                CommandTypes.GetKeyVaultsRequest => await _keyVaultAdapter.GetKeyVaultsAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
+                CommandTypes.GetSecretRequest => await _keyVaultAdapter.GetSecretAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
+                CommandTypes.GetSecretsRequest => await _keyVaultAdapter.GetSecretsAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
+                CommandTypes.DeleteSecretRequest => await _keyVaultAdapter.DeleteSecretAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
+                CommandTypes.AddKeyVaultSecretRequest => await _keyVaultAdapter.AddKeyVaultSecretAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
+                CommandTypes.RecoverSecretRequest => await _keyVaultAdapter.RecoverSecretAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
+                CommandTypes.GetDeletedSecretsRequest => _keyVaultAdapter.GetDeletedSecrets(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
+                CommandTypes.GetAllSecretsRequest => await _keyVaultAdapter.GetAllAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
                 _ => throw new InvalidOperationException($"Invalid command type: {commandMessage.CommandType}"),
             };
 

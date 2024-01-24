@@ -19,4 +19,12 @@ public static class CommandTypes
     public const string GetProjectsRequest = nameof(GetProjectsRequest);
     public const string GetAllVGRequest = nameof(GetAllVGRequest);
     public const string UpdateVGRequest = nameof(UpdateVGRequest);
+    public const string GetKeyVaultsRequest = nameof(GetKeyVaultsRequest);
+    public const string GetSecretRequest = nameof(GetSecretRequest);
+    public const string DeleteSecretRequest = nameof(DeleteSecretRequest);
+    public const string GetSecretsRequest = nameof(GetSecretsRequest);
+    public const string AddKeyVaultSecretRequest = nameof(AddKeyVaultSecretRequest);
+    public const string RecoverSecretRequest = nameof(RecoverSecretRequest);
+    public const string GetDeletedSecretsRequest = nameof(GetDeletedSecretsRequest);
+    public const string GetAllSecretsRequest = nameof(GetAllSecretsRequest);
 }
