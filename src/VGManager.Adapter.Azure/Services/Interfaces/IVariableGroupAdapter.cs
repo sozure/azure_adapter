@@ -12,7 +12,7 @@ public interface IVariableGroupAdapter
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
-    Task<AdapterStatus> UpdateAsync(
+    Task<BaseResponse<AdapterStatus>> UpdateAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );

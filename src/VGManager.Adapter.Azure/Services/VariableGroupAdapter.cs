@@ -145,8 +145,8 @@ public class VariableGroupAdapter : IVariableGroupAdapter
     }
 
     private void Setup(
-        string organization, 
-        string project, 
+        string organization,
+        string project,
         string pat
         )
     {

@@ -1,3 +1,4 @@
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Microsoft.VisualStudio.Services.Profile;
@@ -90,7 +91,7 @@ public static class ResponseProvider
         )
     {
         var res = new List<Dictionary<string, string>>();
-        foreach(var item in result.Item2)
+        foreach (var item in result.Item2)
         {
             res.Add(new()
             {
@@ -105,6 +106,63 @@ public static class ResponseProvider
                 ["Status"] = result.Item1,
                 ["Data"] = res
             }
+        };
+    }
+
+    public static BaseResponse<Dictionary<string, object>> GetResponse(
+        (string?, IEnumerable<string>) result
+        )
+    {
+        var res = new Dictionary<string, object>
+        {
+            { "subscription", result.Item1 ?? string.Empty },
+            { "keyVaults", result.Item2 }
+        };
+        return new()
+        {
+            Data = new Dictionary<string, object>()
+            {
+                ["Status"] = AdapterStatus.Success,
+                ["Data"] = res
+            }
+        };
+    }
+
+    public static BaseResponse<AdapterResponseModel<KeyVaultSecret?>> GetResponse(AdapterResponseModel<KeyVaultSecret?> result)
+    {
+        return new()
+        {
+            Data = result
+        };
+    }
+
+    public static BaseResponse<AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>>> GetResponse(
+        AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>> result
+        )
+    {
+        return new()
+        {
+            Data = result
+        };
+    }
+
+    public static BaseResponse<AdapterResponseModel<IEnumerable<DeletedSecret>>> GetResponse(
+        AdapterResponseModel<IEnumerable<DeletedSecret>> result
+        )
+    {
+        return new()
+        {
+            Data = result
+        };
+    }
+
+    public static BaseResponse<AdapterResponseModel<IEnumerable<KeyVaultSecret>>> GetResponse(
+        AdapterResponseModel<IEnumerable<KeyVaultSecret>> result
+        )
+    {
+        return new()
+        {
+            Data = result
         };
     }
 }

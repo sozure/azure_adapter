@@ -69,15 +69,15 @@ public class CommandProcessorService : ICommandProcessorService
             result = commandMessage.CommandType switch
             {
                 CommandTypes.CreateTagRequest => await _gitVersionAdapter.CreateTagAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetBuildPipelinesRequest => await _buildPipelineAdapter.GetBuildPipelinesAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.RunBuildPipelinesRequest => await _buildPipelineAdapter.RunBuildPipelinesAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetBuildPipelineRequest => await _buildPipelineAdapter.GetBuildPipelineAsync(
@@ -85,51 +85,51 @@ public class CommandProcessorService : ICommandProcessorService
                     cancellationToken
                     ),
                 CommandTypes.RunBuildPipelineRequest => await _buildPipelineAdapter.RunBuildPipelineAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetFilePathRequest => await _gitFileAdapter.GetFilePathAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetConfigFilesRequest => await _gitFileAdapter.GetConfigFilesAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetAllRepositoriesRequest => await _gitRepositoryAdapter.GetAllAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetVariablesFromConfigRequest => await _gitRepositoryAdapter.GetVariablesFromConfigAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetBranchesRequest => await _gitVersionAdapter.GetBranchesAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetTagsRequest => await _gitVersionAdapter.GetTagsAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetProfileRequest => await _profileAdapter.GetProfileAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetEnvironmentsRequest => await _releasePipelineAdapter.GetEnvironmentsAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetVariableGroupsRequest => await _releasePipelineAdapter.GetVariableGroupsAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetProjectsRequest => await _projectAdapter.GetProjectsAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.GetAllVGRequest => await _variableGroupAdapter.GetAllAsync(
-                    vgManagerAdapterCommandMessage, 
+                    vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
                 CommandTypes.UpdateVGRequest => await _variableGroupAdapter.UpdateAsync(

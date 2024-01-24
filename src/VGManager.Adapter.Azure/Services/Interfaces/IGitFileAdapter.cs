@@ -1,6 +1,5 @@
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Response;
-using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services.Interfaces;
 
