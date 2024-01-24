@@ -140,10 +140,6 @@ public class CommandProcessorService : ICommandProcessorService
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
-                CommandTypes.GetSecretRequest => await _keyVaultAdapter.GetSecretAsync(
-                    vgManagerAdapterCommandMessage,
-                    cancellationToken
-                ),
                 CommandTypes.GetSecretsRequest => await _keyVaultAdapter.GetSecretsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
