@@ -44,7 +44,6 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var clientId = payload.ClientId;
             var clientSecret = payload.ClientSecret;
 
-            Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
             var result = new List<string>();
             var clientSecretCredential = new ClientSecretCredential(tenantId, clientId, clientSecret);
             var client = new ArmClient(clientSecretCredential);
