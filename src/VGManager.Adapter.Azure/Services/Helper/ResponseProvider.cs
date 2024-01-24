@@ -5,6 +5,7 @@ using VGManager.Adapter.Models.Models;
 using VGManager.Adapter.Models.Requests;
 using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
+using VariableGroup = Microsoft.TeamFoundation.DistributedTask.WebApi.VariableGroup;
 
 namespace VGManager.Adapter.Azure.Services.Helper;
 
@@ -70,6 +71,14 @@ public static class ResponseProvider
 
     public static BaseResponse<AdapterResponseModel<IEnumerable<ProjectRequest>>> GetResponse(
         AdapterResponseModel<IEnumerable<ProjectRequest>> result
+        )
+        => new()
+        {
+            Data = result
+        };
+
+    public static BaseResponse<AdapterResponseModel<IEnumerable<VariableGroup>>> GetResponse(
+        AdapterResponseModel<IEnumerable<VariableGroup>> result
         )
         => new()
         {
