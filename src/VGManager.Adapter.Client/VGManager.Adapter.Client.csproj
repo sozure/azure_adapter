@@ -6,8 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  
-
   <ItemGroup>
     <ProjectReference Include="..\VGManager.Adapter.Models\VGManager.Adapter.Models.csproj" />
   </ItemGroup>

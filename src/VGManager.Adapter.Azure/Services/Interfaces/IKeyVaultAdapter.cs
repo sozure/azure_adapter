@@ -1,23 +1,43 @@
 using Azure.Security.KeyVault.Secrets;
+using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Models;
+using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IKeyVaultAdapter
 {
-    Task<(string?, IEnumerable<string>)> GetKeyVaultsAsync(
-        string tenantId,
-        string clientId,
-        string clientSecret,
+    Task<BaseResponse<Dictionary<string, object>>> GetKeyVaultsAsync(
+        VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
-    Task<AdapterStatus> AddKeyVaultSecretAsync(Dictionary<string, string> parameters, CancellationToken cancellationToken = default);
-    Task<AdapterStatus> DeleteSecretAsync(string name, CancellationToken cancellationToken = default);
-    Task<AdapterResponseModel<KeyVaultSecret?>> GetSecretAsync(string name, CancellationToken cancellationToken = default);
-    Task<AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>>> GetSecretsAsync(CancellationToken cancellationToken = default);
-    Task<AdapterStatus> RecoverSecretAsync(string name, CancellationToken cancellationToken = default);
-    Task<IEnumerable<KeyVaultSecret>> GetAllAsync(CancellationToken cancellationToken);
-    AdapterResponseModel<IEnumerable<DeletedSecret>> GetDeletedSecrets(CancellationToken cancellationToken = default);
-    public void Setup(string keyVaultName, string tenantId, string clientId, string clientSecret);
+    Task<BaseResponse<AdapterResponseModel<KeyVaultSecret?>>> GetSecretAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        );
+    Task<BaseResponse<AdapterStatus>> DeleteSecretAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        );
+    Task<BaseResponse<AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>>>> GetSecretsAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        );
+    Task<BaseResponse<AdapterStatus>> AddKeyVaultSecretAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        );
+    Task<BaseResponse<AdapterStatus>> RecoverSecretAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        );
+    BaseResponse<AdapterResponseModel<IEnumerable<DeletedSecret>>> GetDeletedSecrets(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        );
+    Task<BaseResponse<AdapterResponseModel<IEnumerable<KeyVaultSecret>>>> GetAllAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        );
 }
