@@ -146,8 +146,8 @@ public static class ResponseProvider
         };
     }
 
-    public static BaseResponse<AdapterResponseModel<IEnumerable<DeletedSecret>>> GetResponse(
-        AdapterResponseModel<IEnumerable<DeletedSecret>> result
+    public static BaseResponse<AdapterResponseModel<IEnumerable<Dictionary<string, object>>>> GetResponse(
+        AdapterResponseModel<IEnumerable<Dictionary<string, object>>> result
         )
     {
         return new()

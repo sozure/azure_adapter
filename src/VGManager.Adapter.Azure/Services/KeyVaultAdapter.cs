@@ -44,7 +44,6 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var clientId = payload.ClientId;
             var clientSecret = payload.ClientSecret;
 
-            Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
             var result = new List<string>();
             var clientSecretCredential = new ClientSecretCredential(tenantId, clientId, clientSecret);
             var client = new ArmClient(clientSecretCredential);
@@ -66,6 +65,7 @@ public class KeyVaultAdapter : IKeyVaultAdapter
 
     public async Task<BaseResponse<AdapterResponseModel<KeyVaultSecret?>>> GetSecretAsync(
         VGManagerAdapterCommand command,
+        string name,
         CancellationToken cancellationToken = default
         )
     {
@@ -91,7 +91,7 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var clientSecret = payload.ClientSecret;
 
             Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
-            result = await _secretClient.GetSecretAsync(payload.AdditionalData, cancellationToken: cancellationToken);
+            result = await _secretClient.GetSecretAsync(name, cancellationToken: cancellationToken);
             return ResponseProvider.GetResponse(GetSecretResult(result));
         }
         catch (RequestFailedException ex)
@@ -147,10 +147,10 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         CancellationToken cancellationToken = default
         )
     {
-        BaseSecretRequest? payload;
+        SecretRequest<string>? payload;
         try
         {
-            payload = JsonSerializer.Deserialize<BaseSecretRequest>(command.Payload);
+            payload = JsonSerializer.Deserialize<SecretRequest<string>>(command.Payload);
 
             if (payload is null)
             {
@@ -170,7 +170,8 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             _logger.LogInformation("Get secrets from {keyVault}.", keyVaultName);
             var secretProperties = _secretClient.GetPropertiesOfSecrets(cancellationToken).ToList();
             var results = await Task.WhenAll(secretProperties.Select(p => GetSecretAsync(
-                command
+                command,
+                p.Name
                 )
             ));
 
@@ -273,7 +274,7 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         }
     }
 
-    public BaseResponse<AdapterResponseModel<IEnumerable<DeletedSecret>>> GetDeletedSecrets(
+    public BaseResponse<AdapterResponseModel<IEnumerable<Dictionary<string, object>>>> GetDeletedSecrets(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -285,9 +286,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
 
             if (payload is null)
             {
-                return ResponseProvider.GetResponse(new AdapterResponseModel<IEnumerable<DeletedSecret>>()
+                return ResponseProvider.GetResponse(new AdapterResponseModel<IEnumerable<Dictionary<string, object>>>()
                 {
-                    Data = Enumerable.Empty<DeletedSecret>(),
+                    Data = Enumerable.Empty<Dictionary<string, object>>(),
                     Status = AdapterStatus.Unknown
                 });
             }
@@ -350,7 +351,7 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             return ResponseProvider.GetResponse(new AdapterResponseModel<IEnumerable<KeyVaultSecret>>()
             {
                 Data = results,
-                Status = AdapterStatus.Unknown
+                Status = AdapterStatus.Success
             });
         }
         catch (Exception)
@@ -370,21 +371,33 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         _secretClient = new SecretClient(uri, clientSecretCredential);
     }
 
-    private static AdapterResponseModel<IEnumerable<DeletedSecret>> GetDeletedSecretsResult(AdapterStatus status)
+    private static AdapterResponseModel<IEnumerable<Dictionary<string, object>>> GetDeletedSecretsResult(AdapterStatus status)
     {
         return new()
         {
             Status = status,
-            Data = Enumerable.Empty<DeletedSecret>()
+            Data = Enumerable.Empty<Dictionary<string, object>>()
         };
     }
 
-    private static AdapterResponseModel<IEnumerable<DeletedSecret>> GetDeletedSecretsResult(IEnumerable<DeletedSecret> deletedSecrets)
+    private static AdapterResponseModel<IEnumerable<Dictionary<string, object>>> GetDeletedSecretsResult(
+        IEnumerable<DeletedSecret> deletedSecrets
+        )
     {
+        var res = new List<Dictionary<string, object>>();
+        foreach (var deletedSecret in deletedSecrets)
+        {
+            res.Add(new()
+            {
+                ["Name"] = deletedSecret.Name,
+                ["Value"] = deletedSecret.Value,
+                ["DeletedOn"] = deletedSecret.DeletedOn!
+            });
+        }
         return new()
         {
             Status = AdapterStatus.Success,
-            Data = deletedSecrets
+            Data = res
         };
     }
 

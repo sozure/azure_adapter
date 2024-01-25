@@ -103,6 +103,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
 
         try
         {
+            Setup(payload.Organization, payload.Project, payload.PAT);
             _logger.LogDebug("Update variable group with name: {variableGroupName} in {project} Azure project.", variableGroupName, _project);
             using var client = await _connection.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
             await client!.UpdateVariableGroupAsync(payload.VariableGroupId, payload.Params, cancellationToken: cancellationToken);

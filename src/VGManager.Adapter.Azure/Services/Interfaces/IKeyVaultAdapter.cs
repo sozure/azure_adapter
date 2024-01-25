@@ -14,6 +14,7 @@ public interface IKeyVaultAdapter
         );
     Task<BaseResponse<AdapterResponseModel<KeyVaultSecret?>>> GetSecretAsync(
         VGManagerAdapterCommand command,
+        string name,
         CancellationToken cancellationToken = default
         );
     Task<BaseResponse<AdapterStatus>> DeleteSecretAsync(
@@ -32,7 +33,7 @@ public interface IKeyVaultAdapter
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
-    BaseResponse<AdapterResponseModel<IEnumerable<DeletedSecret>>> GetDeletedSecrets(
+    BaseResponse<AdapterResponseModel<IEnumerable<Dictionary<string, object>>>> GetDeletedSecrets(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
