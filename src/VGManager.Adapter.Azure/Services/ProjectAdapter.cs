@@ -30,11 +30,9 @@ public class ProjectAdapter : IProjectAdapter
         CancellationToken cancellationToken = default
         )
     {
-        BaseRequest? payload;
+        var payload = PayloadProvider<BaseRequest>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<BaseRequest>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse(new AdapterResponseModel<IEnumerable<ProjectRequest>>()

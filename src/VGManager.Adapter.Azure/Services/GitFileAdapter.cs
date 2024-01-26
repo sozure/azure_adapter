@@ -29,11 +29,9 @@ public class GitFileAdapter : IGitFileAdapter
         CancellationToken cancellationToken = default
         )
     {
-        GitFileBaseRequest<string>? payload = null;
+        var payload = PayloadProvider<GitFileBaseRequest<string>>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<GitFileBaseRequest<string>>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
@@ -61,11 +59,9 @@ public class GitFileAdapter : IGitFileAdapter
         CancellationToken cancellationToken = default
         )
     {
-        GitFileBaseRequest<string>? payload = null;
+        var payload = PayloadProvider<GitFileBaseRequest<string>>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<GitFileBaseRequest<string>>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));

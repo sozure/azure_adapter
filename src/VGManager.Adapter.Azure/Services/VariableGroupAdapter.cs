@@ -4,7 +4,6 @@ using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
-using System.Text.Json;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Azure.Services.Requests;
@@ -18,12 +17,15 @@ namespace VGManager.Adapter.Azure.Services;
 
 public class VariableGroupAdapter : IVariableGroupAdapter
 {
-    private VssConnection _connection = null!;
-    private string _project = null!;
+    private readonly IHttpClientProvider _clientProvider;
     private readonly ILogger _logger;
 
-    public VariableGroupAdapter(ILogger<VariableGroupAdapter> logger)
+    public VariableGroupAdapter(
+        IHttpClientProvider clientProvider,
+        ILogger<VariableGroupAdapter> logger
+        )
     {
+        _clientProvider = clientProvider;
         _logger = logger;
     }
 
@@ -32,21 +34,19 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         CancellationToken cancellationToken = default
         )
     {
-        ExtendedBaseRequest? payload;
+        var payload = PayloadProvider<ExtendedBaseRequest>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<ExtendedBaseRequest>(command.Payload);
-
             if (payload is null)
             {
                 var status = AdapterStatus.Unknown;
                 return ResponseProvider.GetResponse(GetResult(status));
             }
-
-            Setup(payload.Organization, payload.Project, payload.PAT);
-            _logger.LogInformation("Request variable groups from {project} Azure project.", _project);
-            using var client = await _connection.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
-            var variableGroups = await client.GetVariableGroupsAsync(_project, cancellationToken: cancellationToken);
+            var project = payload.Project;
+            _clientProvider.Setup(payload.Organization, payload.PAT);
+            _logger.LogInformation("Request variable groups from {project} Azure project.", project);
+            using var client = await _clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
+            var variableGroups = await client.GetVariableGroupsAsync(project, cancellationToken: cancellationToken);
             return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, variableGroups));
         }
         catch (VssUnauthorizedException ex)
@@ -80,15 +80,14 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         CancellationToken cancellationToken = default
         )
     {
-        VGRequest? payload;
-        payload = JsonSerializer.Deserialize<VGRequest>(command.Payload);
-
+        var payload = PayloadProvider<VGRequest>.GetPayload(command.Payload);
         if (payload is null)
         {
             return ResponseProvider.GetResponse(AdapterStatus.Unknown);
         }
 
         var variableGroupName = payload.Params.Name;
+        var project = payload.Project;
         payload.Params.VariableGroupProjectReferences = new List<VariableGroupProjectReference>()
         {
             new()
@@ -96,16 +95,16 @@ public class VariableGroupAdapter : IVariableGroupAdapter
                 Name = variableGroupName,
                 ProjectReference = new()
                 {
-                    Name = _project
+                    Name = project
                 }
             }
         };
 
         try
         {
-            Setup(payload.Organization, payload.Project, payload.PAT);
-            _logger.LogDebug("Update variable group with name: {variableGroupName} in {project} Azure project.", variableGroupName, _project);
-            using var client = await _connection.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
+            _clientProvider.Setup(payload.Organization, payload.PAT);
+            _logger.LogDebug("Update variable group with name: {variableGroupName} in {project} Azure project.", variableGroupName, project);
+            using var client = await _clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
             await client!.UpdateVariableGroupAsync(payload.VariableGroupId, payload.Params, cancellationToken: cancellationToken);
             return ResponseProvider.GetResponse(AdapterStatus.Success);
         }
@@ -143,22 +142,6 @@ public class VariableGroupAdapter : IVariableGroupAdapter
             _logger.LogError(ex, "Couldn't update variable groups. Status: {status}.", status);
             return ResponseProvider.GetResponse(status);
         }
-    }
-
-    private void Setup(
-        string organization,
-        string project,
-        string pat
-        )
-    {
-        _project = project;
-
-        var uriString = $"https://dev.azure.com/{organization}";
-        Uri uri;
-        Uri.TryCreate(uriString, UriKind.Absolute, out uri!);
-
-        var credentials = new VssBasicCredential(string.Empty, pat);
-        _connection = new VssConnection(uri, credentials);
     }
 
     private static AdapterResponseModel<IEnumerable<VariableGroup>> GetResult(AdapterStatus status, IEnumerable<VariableGroup> variableGroups)

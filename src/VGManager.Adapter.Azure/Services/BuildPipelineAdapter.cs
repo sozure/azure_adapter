@@ -26,17 +26,7 @@ public class BuildPipelineAdapter : IBuildPipelineAdapter
         CancellationToken cancellationToken = default
         )
     {
-        ExtendedBaseRequest? payload;
-
-        try
-        {
-            payload = JsonSerializer.Deserialize<ExtendedBaseRequest>(command.Payload);
-        }
-        catch (Exception)
-        {
-            return ResponseProvider.GetResponse(Enumerable.Empty<BuildDefinitionReference>());
-        }
-
+        var payload = PayloadProvider<ExtendedBaseRequest>.GetPayload(command.Payload);
         if (payload is null)
         {
             return ResponseProvider.GetResponse(Enumerable.Empty<BuildDefinitionReference>());
@@ -54,17 +44,7 @@ public class BuildPipelineAdapter : IBuildPipelineAdapter
         CancellationToken cancellationToken = default
         )
     {
-        GetBuildPipelineRequest? payload;
-
-        try
-        {
-            payload = JsonSerializer.Deserialize<GetBuildPipelineRequest>(command.Payload);
-        }
-        catch (Exception)
-        {
-            return null!;
-        }
-
+        var payload = PayloadProvider<GetBuildPipelineRequest>.GetPayload(command.Payload);
         if (payload is null)
         {
             return null!;
@@ -82,11 +62,9 @@ public class BuildPipelineAdapter : IBuildPipelineAdapter
         CancellationToken cancellationToken = default
         )
     {
-        RunBuildPipelineRequest? payload = null!;
+        var payload = PayloadProvider<RunBuildPipelineRequest>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<RunBuildPipelineRequest>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse(AdapterStatus.Unknown);
@@ -117,11 +95,9 @@ public class BuildPipelineAdapter : IBuildPipelineAdapter
         CancellationToken cancellationToken = default
         )
     {
-        RunBuildPipelinesRequest? payload = null!;
+        var payload = PayloadProvider<RunBuildPipelinesRequest>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<RunBuildPipelinesRequest>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse(AdapterStatus.Unknown);

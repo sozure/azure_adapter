@@ -6,6 +6,7 @@ using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Azure.Services.Requests;
 using VGManager.Adapter.Models.Kafka;
+using VGManager.Adapter.Models.Requests;
 using VGManager.Adapter.Models.Response;
 
 namespace VGManager.Adapter.Azure.Services;
@@ -26,11 +27,9 @@ public class ProfileAdapter : IProfileAdapter
         CancellationToken cancellationToken = default
         )
     {
-        BaseRequest? payload;
+        var payload = PayloadProvider<BaseRequest>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<BaseRequest>(command.Payload);
-
             if (payload is null)
             {
                 Profile? profile = null!;

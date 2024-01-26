@@ -4,7 +4,6 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.KeyVault;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Kafka;
@@ -17,11 +16,15 @@ namespace VGManager.Adapter.Azure.Services;
 
 public class KeyVaultAdapter : IKeyVaultAdapter
 {
-    private SecretClient _secretClient = null!;
+    private readonly IHttpClientProvider _clientProvider;
     private readonly ILogger _logger;
 
-    public KeyVaultAdapter(ILogger<KeyVaultAdapter> logger)
+    public KeyVaultAdapter(
+        IHttpClientProvider clientProvider,
+        ILogger<KeyVaultAdapter> logger
+        )
     {
+        _clientProvider = clientProvider;
         _logger = logger;
     }
 
@@ -30,11 +33,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         CancellationToken cancellationToken = default
         )
     {
-        BaseSecretRequest? payload;
+        var payload = PayloadProvider<BaseSecretRequest>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<BaseSecretRequest>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse((string.Empty, Enumerable.Empty<string>()));
@@ -70,11 +71,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         )
     {
         KeyVaultSecret result;
-        SecretRequest<string>? payload;
+        var payload = PayloadProvider<SecretRequest<string>>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<SecretRequest<string>>(command.Payload);
-
             if (payload is null)
             {
                 var data = new AdapterResponseModel<KeyVaultSecret?>
@@ -90,8 +89,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var clientId = payload.ClientId;
             var clientSecret = payload.ClientSecret;
 
-            Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
-            result = await _secretClient.GetSecretAsync(name, cancellationToken: cancellationToken);
+            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = _clientProvider.GetSecretClient();
+            result = await secretClient.GetSecretAsync(name, cancellationToken: cancellationToken);
             return ResponseProvider.GetResponse(GetSecretResult(result));
         }
         catch (RequestFailedException ex)
@@ -113,11 +113,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         CancellationToken cancellationToken = default
         )
     {
-        SecretRequest<string>? payload;
+        var payload = PayloadProvider<SecretRequest<string>>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<SecretRequest<string>>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse(AdapterStatus.Unknown);
@@ -129,9 +127,10 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var keyVaultName = payload.KeyVaultName;
             var name = payload.AdditionalData;
 
-            Setup(keyVaultName, tenantId, clientId, clientSecret);
             _logger.LogDebug("Delete secret {name} in {keyVault}.", name, keyVaultName);
-            await _secretClient.StartDeleteSecretAsync(name, cancellationToken);
+            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = _clientProvider.GetSecretClient();
+            await secretClient.StartDeleteSecretAsync(name, cancellationToken);
             return ResponseProvider.GetResponse(AdapterStatus.Success);
         }
         catch (Exception ex)
@@ -147,11 +146,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         CancellationToken cancellationToken = default
         )
     {
-        SecretRequest<string>? payload;
+        var payload = PayloadProvider<SecretRequest<string>>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<SecretRequest<string>>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse(new AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>>()
@@ -166,9 +163,10 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var clientSecret = payload.ClientSecret;
             var keyVaultName = payload.KeyVaultName;
 
-            Setup(keyVaultName, tenantId, clientId, clientSecret);
             _logger.LogInformation("Get secrets from {keyVault}.", keyVaultName);
-            var secretProperties = _secretClient.GetPropertiesOfSecrets(cancellationToken).ToList();
+            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = _clientProvider.GetSecretClient();
+            var secretProperties = secretClient.GetPropertiesOfSecrets(cancellationToken).ToList();
             var results = await Task.WhenAll(secretProperties.Select(p => GetSecretAsync(
                 command,
                 p.Name
@@ -195,11 +193,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         CancellationToken cancellationToken = default
         )
     {
-        SecretRequest<Dictionary<string, string>>? payload;
+        var payload = PayloadProvider<SecretRequest<Dictionary<string, string>>>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<SecretRequest<Dictionary<string, string>>>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse(AdapterStatus.Unknown);
@@ -211,10 +207,11 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var keyVaultName = payload.KeyVaultName;
             var parameters = payload.AdditionalData;
 
-            Setup(keyVaultName, tenantId, clientId, clientSecret);
             _logger.LogInformation("Get deleted secrets from {keyVault}.", keyVaultName);
+            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = _clientProvider.GetSecretClient();
             var secretName = parameters["secretName"];
-            var deletedSecrets = _secretClient.GetDeletedSecrets(cancellationToken).ToList();
+            var deletedSecrets = secretClient.GetDeletedSecrets(cancellationToken).ToList();
             var didWeRecover = deletedSecrets.Exists(deletedSecret => deletedSecret.Name.Equals(secretName));
 
             if (!didWeRecover)
@@ -222,12 +219,12 @@ public class KeyVaultAdapter : IKeyVaultAdapter
                 _logger.LogDebug("Set secret: {secretName} in {keyVault}.", secretName, keyVaultName);
                 var secretValue = parameters["secretValue"];
                 var newSecret = new KeyVaultSecret(secretName, secretValue);
-                await _secretClient.SetSecretAsync(newSecret, cancellationToken);
+                await secretClient.SetSecretAsync(newSecret, cancellationToken);
             }
             else
             {
                 _logger.LogDebug("Recover deleted secret: {secretName} in {keyVault}.", secretName, keyVaultName);
-                await _secretClient.StartRecoverDeletedSecretAsync(secretName, cancellationToken);
+                await secretClient.StartRecoverDeletedSecretAsync(secretName, cancellationToken);
             }
 
             return ResponseProvider.GetResponse(AdapterStatus.Success);
@@ -245,11 +242,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         CancellationToken cancellationToken = default
         )
     {
-        SecretRequest<string>? payload;
+        var payload = PayloadProvider<SecretRequest<string>>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<SecretRequest<string>>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse(AdapterStatus.Unknown);
@@ -261,9 +256,10 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var keyVaultName = payload.KeyVaultName;
             var name = payload.AdditionalData;
 
-            Setup(keyVaultName, tenantId, clientId, clientSecret);
             _logger.LogDebug("Recover deleted secret: {secretName} in {keyVault}.", name, keyVaultName);
-            await _secretClient.StartRecoverDeletedSecretAsync(name, cancellationToken);
+            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = _clientProvider.GetSecretClient();
+            await secretClient.StartRecoverDeletedSecretAsync(name, cancellationToken);
             return ResponseProvider.GetResponse(AdapterStatus.Success);
         }
         catch (Exception ex)
@@ -279,11 +275,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         CancellationToken cancellationToken = default
         )
     {
-        BaseSecretRequest? payload;
+        var payload = PayloadProvider<BaseSecretRequest>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<BaseSecretRequest>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse(new AdapterResponseModel<IEnumerable<Dictionary<string, object>>>()
@@ -298,9 +292,10 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var clientSecret = payload.ClientSecret;
             var keyVaultName = payload.KeyVaultName;
 
-            Setup(keyVaultName, tenantId, clientId, clientSecret);
             _logger.LogInformation("Get deleted secrets from {keyVault}.", keyVaultName);
-            var deletedSecrets = _secretClient.GetDeletedSecrets(cancellationToken).ToList();
+            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = _clientProvider.GetSecretClient();
+            var deletedSecrets = secretClient.GetDeletedSecrets(cancellationToken).ToList();
             return ResponseProvider.GetResponse(GetDeletedSecretsResult(deletedSecrets));
         }
         catch (Exception ex)
@@ -316,11 +311,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         CancellationToken cancellationToken = default
         )
     {
-        BaseSecretRequest? payload;
+        var payload = PayloadProvider<BaseSecretRequest>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<BaseSecretRequest>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse(new AdapterResponseModel<IEnumerable<KeyVaultSecret>>()
@@ -335,13 +328,14 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var clientSecret = payload.ClientSecret;
             var keyVaultName = payload.KeyVaultName;
 
-            Setup(keyVaultName, tenantId, clientId, clientSecret);
-            var secretProperties = _secretClient.GetPropertiesOfSecrets(cancellationToken).ToList();
+            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = _clientProvider.GetSecretClient();
+            var secretProperties = secretClient.GetPropertiesOfSecrets(cancellationToken).ToList();
             var results = new List<KeyVaultSecret>();
 
             foreach (var secretProp in secretProperties)
             {
-                var secret = await _secretClient.GetSecretAsync(secretProp.Name, cancellationToken: cancellationToken);
+                var secret = await secretClient.GetSecretAsync(secretProp.Name, cancellationToken: cancellationToken);
                 if (secret is not null)
                 {
                     results.Add(secret);
@@ -362,13 +356,6 @@ public class KeyVaultAdapter : IKeyVaultAdapter
                 Status = AdapterStatus.Unknown
             });
         }
-    }
-
-    private void Setup(string keyVaultName, string tenantId, string clientId, string clientSecret)
-    {
-        var uri = new Uri($"https://{keyVaultName.ToLower()}.vault.azure.net/");
-        var clientSecretCredential = new ClientSecretCredential(tenantId, clientId, clientSecret);
-        _secretClient = new SecretClient(uri, clientSecretCredential);
     }
 
     private static AdapterResponseModel<IEnumerable<Dictionary<string, object>>> GetDeletedSecretsResult(AdapterStatus status)

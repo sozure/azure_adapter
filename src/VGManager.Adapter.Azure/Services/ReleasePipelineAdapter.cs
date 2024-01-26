@@ -34,11 +34,9 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
         CancellationToken cancellationToken = default
         )
     {
-        ReleasePipelineRequest? payload = null!;
+        var payload = PayloadProvider<ReleasePipelineRequest>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<ReleasePipelineRequest>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
@@ -84,11 +82,9 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
         CancellationToken cancellationToken = default
         )
     {
-        ReleasePipelineRequest? payload = null!;
+        var payload = PayloadProvider<ReleasePipelineRequest>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<ReleasePipelineRequest>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<(string, string)>()));
