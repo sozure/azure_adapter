@@ -52,7 +52,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
 
             var filteredVariableGroups = payload.ContainsSecrets ?
                         _variableFilterService.Filter(variableGroups, payload.VariableGroupFilter) :
-                        _variableFilterService.FilterWithoutSecrets(true, payload.VariableGroupFilter, variableGroups);
+                        _variableFilterService.FilterWithoutSecrets(payload.FilterAsRegex, payload.VariableGroupFilter, variableGroups);
 
             return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, filteredVariableGroups));
         }
