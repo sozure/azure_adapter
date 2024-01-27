@@ -23,9 +23,9 @@ public class HttpClientProvider : IHttpClientProvider
     }
 
     public void Setup(
-        string keyVaultName, 
-        string tenantId, 
-        string clientId, 
+        string keyVaultName,
+        string tenantId,
+        string clientId,
         string clientSecret
         )
     {

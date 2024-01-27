@@ -1,4 +1,4 @@
-namespace VGManager.Adapter.Azure.Services.Requests;
+namespace VGManager.Adapter.Models.Requests;
 
 public class GitBaseRequest<T> : ExtendedBaseRequest
 {
