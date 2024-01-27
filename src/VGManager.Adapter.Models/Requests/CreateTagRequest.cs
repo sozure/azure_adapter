@@ -1,5 +1,3 @@
-using VGManager.Adapter.Azure.Services.Requests;
-
 namespace VGManager.Adapter.Models.Requests;
 
 public class CreateTagRequest : ExtendedBaseRequest

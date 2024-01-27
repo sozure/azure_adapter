@@ -70,6 +70,7 @@ static partial class Program
         services.AddScoped<ICommandProcessorService, CommandProcessorService>();
 
         services.AddScoped<IVariableGroupAdapter, VariableGroupAdapter>();
+        services.AddScoped<IVariableFilterService, VariableFilterService>();
         services.AddScoped<IProjectAdapter, ProjectAdapter>();
         services.AddScoped<IKeyVaultAdapter, KeyVaultAdapter>();
         services.AddScoped<IHttpClientProvider, HttpClientProvider>();

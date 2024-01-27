@@ -1,10 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
-using System.Text.Json;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
-using VGManager.Adapter.Azure.Services.Requests;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Requests;
 using VGManager.Adapter.Models.Response;
@@ -34,11 +32,9 @@ public class GitVersionAdapter : IGitVersionAdapter
         CancellationToken cancellationToken = default
         )
     {
-        GitFileBaseRequest<string>? payload = null;
+        var payload = PayloadProvider<GitFileBaseRequest<string>>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<GitFileBaseRequest<string>>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
@@ -68,12 +64,9 @@ public class GitVersionAdapter : IGitVersionAdapter
         CancellationToken cancellationToken = default
         )
     {
-        GitFileBaseRequest<Guid>? payload = null;
-
+        var payload = PayloadProvider<GitFileBaseRequest<Guid>>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<GitFileBaseRequest<Guid>>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
@@ -103,12 +96,9 @@ public class GitVersionAdapter : IGitVersionAdapter
         CancellationToken cancellationToken = default
         )
     {
-        CreateTagRequest? payload = null;
-
+        var payload = PayloadProvider<CreateTagRequest>.GetPayload(command.Payload);
         try
         {
-            payload = JsonSerializer.Deserialize<CreateTagRequest>(command.Payload);
-
             if (payload is null)
             {
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, string.Empty));

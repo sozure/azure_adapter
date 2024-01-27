@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Json;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
-using VGManager.Adapter.Azure.Services.Requests;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Requests;
 using VGManager.Adapter.Models.Response;
@@ -36,16 +35,7 @@ public class GitRepositoryAdapter : IGitRepositoryAdapter
         CancellationToken cancellationToken = default
         )
     {
-        ExtendedBaseRequest? payload = null!;
-        try
-        {
-            payload = JsonSerializer.Deserialize<ExtendedBaseRequest>(command.Payload);
-        }
-        catch (Exception)
-        {
-            return ResponseProvider.GetResponse(Enumerable.Empty<GitRepository>());
-        }
-
+        var payload = PayloadProvider<ExtendedBaseRequest>.GetPayload(command.Payload);
         if (payload is null)
         {
             return ResponseProvider.GetResponse(Enumerable.Empty<GitRepository>());
@@ -64,16 +54,7 @@ public class GitRepositoryAdapter : IGitRepositoryAdapter
         CancellationToken cancellationToken = default
         )
     {
-        GitRepositoryRequest<string>? payload;
-        try
-        {
-            payload = JsonSerializer.Deserialize<GitRepositoryRequest<string>>(command.Payload);
-        }
-        catch (Exception)
-        {
-            return ResponseProvider.GetResponse(Enumerable.Empty<string>().ToList());
-        }
-
+        var payload = PayloadProvider<GitRepositoryRequest<string>>.GetPayload(command.Payload);
         if (payload is null)
         {
             return ResponseProvider.GetResponse(Enumerable.Empty<string>().ToList());
