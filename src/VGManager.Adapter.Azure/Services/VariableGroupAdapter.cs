@@ -6,7 +6,6 @@ using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
-using VGManager.Adapter.Azure.Services.Requests;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Models;
 using VGManager.Adapter.Models.Requests;
@@ -18,14 +17,17 @@ namespace VGManager.Adapter.Azure.Services;
 public class VariableGroupAdapter : IVariableGroupAdapter
 {
     private readonly IHttpClientProvider _clientProvider;
+    private readonly IVariableFilterService _variableFilterService;
     private readonly ILogger _logger;
 
     public VariableGroupAdapter(
         IHttpClientProvider clientProvider,
+        IVariableFilterService variableFilterService,
         ILogger<VariableGroupAdapter> logger
         )
     {
         _clientProvider = clientProvider;
+        _variableFilterService = variableFilterService;
         _logger = logger;
     }
 
@@ -34,7 +36,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         CancellationToken cancellationToken = default
         )
     {
-        var payload = PayloadProvider<ExtendedBaseRequest>.GetPayload(command.Payload);
+        var payload = PayloadProvider<GetVGRequest>.GetPayload(command.Payload);
         try
         {
             if (payload is null)
@@ -47,7 +49,12 @@ public class VariableGroupAdapter : IVariableGroupAdapter
             _logger.LogInformation("Request variable groups from {project} Azure project.", project);
             using var client = await _clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
             var variableGroups = await client.GetVariableGroupsAsync(project, cancellationToken: cancellationToken);
-            return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, variableGroups));
+
+            var filteredVariableGroups = payload.ContainsSecrets ?
+                        _variableFilterService.Filter(variableGroups, payload.VariableGroupFilter) :
+                        _variableFilterService.FilterWithoutSecrets(true, payload.VariableGroupFilter, variableGroups);
+
+            return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, filteredVariableGroups));
         }
         catch (VssUnauthorizedException ex)
         {
@@ -80,7 +87,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         CancellationToken cancellationToken = default
         )
     {
-        var payload = PayloadProvider<VGRequest>.GetPayload(command.Payload);
+        var payload = PayloadProvider<UpdateVGRequest>.GetPayload(command.Payload);
         if (payload is null)
         {
             return ResponseProvider.GetResponse(AdapterStatus.Unknown);
