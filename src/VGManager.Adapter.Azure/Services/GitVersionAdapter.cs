@@ -110,6 +110,7 @@ public class GitVersionAdapter : IGitVersionAdapter
             _clientProvider.Setup(payload.Organization, payload.PAT);
             _logger.LogInformation("Request git tags from {project} git project.", repositoryId);
             using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
+            
             var sprint = await _sprintAdapter.GetCurrentSprintAsync(payload.Project, cancellationToken);
             var branch = await client.GetBranchAsync(
                 project,
@@ -121,7 +122,7 @@ public class GitVersionAdapter : IGitVersionAdapter
             var gitAnnotatedTag = new GitAnnotatedTag
             {
                 Name = tag,
-                Message = $"Release {sprint}",
+                Message = $"Release {sprint.Item2}",
                 TaggedBy = new GitUserDate
                 {
                     Date = DateTime.UtcNow,
