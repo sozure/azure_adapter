@@ -54,6 +54,11 @@ public class VariableGroupAdapter : IVariableGroupAdapter
                         _variableFilterService.Filter(variableGroups, payload.VariableGroupFilter) :
                         _variableFilterService.FilterWithoutSecrets(payload.FilterAsRegex, payload.VariableGroupFilter, variableGroups);
 
+            if (payload.PotentialVariableGroups is not null)
+            {
+                filteredVariableGroups = filteredVariableGroups.Where(vg => payload.PotentialVariableGroups.Contains(vg.Name));
+            }
+
             return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, filteredVariableGroups));
         }
         catch (VssUnauthorizedException ex)
