@@ -4,6 +4,7 @@ using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
+using System.Text.RegularExpressions;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Kafka;
@@ -57,6 +58,30 @@ public class VariableGroupAdapter : IVariableGroupAdapter
             if (payload.PotentialVariableGroups is not null)
             {
                 filteredVariableGroups = filteredVariableGroups.Where(vg => payload.PotentialVariableGroups.Contains(vg.Name));
+            }
+
+            if(payload.KeyIsRegex ?? false)
+            {
+                Regex keyRegex;
+                try
+                {
+                    keyRegex = new Regex(payload.KeyFilter.ToLower(), RegexOptions.None, TimeSpan.FromMilliseconds(5));
+                    filteredVariableGroups = filteredVariableGroups.Where(
+                        vg => _variableFilterService.Filter(vg.Variables, keyRegex).Any()
+                        ).ToList();
+                }
+                catch (RegexParseException ex)
+                {
+                    _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", payload.KeyFilter);
+                    filteredVariableGroups = filteredVariableGroups.Where(
+                        vg => _variableFilterService.Filter(vg.Variables, payload.KeyFilter).Any()
+                        ).ToList();
+                }
+            } else
+            {
+                filteredVariableGroups = filteredVariableGroups.Where(
+                        vg => _variableFilterService.Filter(vg.Variables, payload.KeyFilter).Any()
+                        ).ToList();
             }
 
             return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, filteredVariableGroups));
