@@ -21,7 +21,7 @@ public interface IKeyVaultAdapter
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
-    Task<BaseResponse<AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>>>> GetSecretsAsync(
+    Task<BaseResponse<AdapterResponseModel<IEnumerable<AdapterResponseModel<SimplifiedSecretResponse?>>>>> GetSecretsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
