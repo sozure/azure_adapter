@@ -196,17 +196,20 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         )
     {
         var newDict = new Dictionary<string, VariableValue>(matchedVariables);
-        result.Add(
-            new()
-            {
-                Name = vg.Name,
-                Type = vg.Type,
-                Id = vg.Id,
-                Description = vg.Description,
-                Variables = newDict,
-                ProviderData = vg.ProviderData
-            }
-        );
+        var res = new SimplifiedVGResponse
+        {
+            Name = vg.Name,
+            Type = vg.Type,
+            Id = vg.Id,
+            Description = vg.Description,
+            Variables = newDict
+        };
+        if (vg.Type == VariableGroupType.AzureKeyVault)
+        {
+            var azProviderData = vg.ProviderData as AzureKeyVaultVariableGroupProviderData;
+            res.KeyVaultName = azProviderData?.Vault;
+        }
+        result.Add(res);
     }
 
     private static AdapterResponseModel<IEnumerable<VariableGroup>> GetResult(AdapterStatus status, IEnumerable<VariableGroup> variableGroups)
