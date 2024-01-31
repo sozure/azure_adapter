@@ -8,7 +8,7 @@ namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IVariableGroupAdapter
 {
-    Task<BaseResponse<AdapterResponseModel<IEnumerable<VariableGroup>>>> GetAllAsync(
+    Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
