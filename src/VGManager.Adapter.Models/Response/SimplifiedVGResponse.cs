@@ -9,4 +9,5 @@ public class SimplifiedVGResponse
     public int Id { get; set; }
     public string Description { get; set; } = null!;
     public IDictionary<string, VariableValue> Variables { get; set; } = null!;
+    public VariableGroupProviderData ProviderData { get; set; } = null!;
 }

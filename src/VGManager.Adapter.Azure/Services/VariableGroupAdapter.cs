@@ -71,17 +71,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
                     foreach (var vg in filteredVariableGroups)
                     {
                         var matchedVariables = _variableFilterService.Filter(vg.Variables, keyRegex);
-                        var newDict = new Dictionary<string, VariableValue>(matchedVariables);
-                        result.Add(
-                            new SimplifiedVGResponse
-                            {
-                                Name = vg.Name,
-                                Type = vg.Type,
-                                Id = vg.Id,
-                                Description = vg.Description,
-                                Variables = newDict
-                            }
-                        );
+                        AddToResult(result, vg, matchedVariables);
                     }
                 }
                 catch (RegexParseException ex)
@@ -90,17 +80,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
                     foreach(var vg in filteredVariableGroups)
                     {
                         var matchedVariables = _variableFilterService.Filter(vg.Variables, payload.KeyFilter);
-                        var newDict = new Dictionary<string, VariableValue>(matchedVariables);
-                        result.Add(
-                            new SimplifiedVGResponse
-                            {
-                                Name = vg.Name,
-                                Type = vg.Type,
-                                Id = vg.Id,
-                                Description = vg.Description,
-                                Variables = newDict
-                            }
-                        );
+                        AddToResult(result, vg, matchedVariables);
                     }
                 }
             } else
@@ -108,17 +88,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
                 foreach(var vg in filteredVariableGroups)
                 {
                     var matchedVariables = _variableFilterService.Filter(vg.Variables, payload.KeyFilter);
-                    var newDict = new Dictionary<string, VariableValue>(matchedVariables);
-                    result.Add(
-                        new SimplifiedVGResponse
-                        {
-                            Name = vg.Name,
-                            Type = vg.Type,
-                            Id = vg.Id,
-                            Description = vg.Description,
-                            Variables = newDict
-                        }
-                    );
+                    AddToResult(result, vg, matchedVariables);
                 }
             }
 
@@ -217,6 +187,26 @@ public class VariableGroupAdapter : IVariableGroupAdapter
             _logger.LogError(ex, "Couldn't update variable groups. Status: {status}.", status);
             return ResponseProvider.GetResponse(status);
         }
+    }
+
+    private static void AddToResult(
+        List<SimplifiedVGResponse> result,
+        VariableGroup vg,
+        IEnumerable<KeyValuePair<string, VariableValue>> matchedVariables
+        )
+    {
+        var newDict = new Dictionary<string, VariableValue>(matchedVariables);
+        result.Add(
+            new()
+            {
+                Name = vg.Name,
+                Type = vg.Type,
+                Id = vg.Id,
+                Description = vg.Description,
+                Variables = newDict,
+                ProviderData = vg.ProviderData
+            }
+        );
     }
 
     private static AdapterResponseModel<IEnumerable<VariableGroup>> GetResult(AdapterStatus status, IEnumerable<VariableGroup> variableGroups)
