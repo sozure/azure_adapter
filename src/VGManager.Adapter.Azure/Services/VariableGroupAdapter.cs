@@ -32,7 +32,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         _logger = logger;
     }
 
-    public async Task<BaseResponse<AdapterResponseModel<IEnumerable<VariableGroup>>>> GetAllAsync(
+    public async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -43,7 +43,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
             if (payload is null)
             {
                 var status = AdapterStatus.Unknown;
-                return ResponseProvider.GetResponse(GetResult(status));
+                return ResponseProvider.GetResponse(GetEmptyResult(status));
             }
             var project = payload.Project;
             _clientProvider.Setup(payload.Organization, payload.PAT);
@@ -60,55 +60,93 @@ public class VariableGroupAdapter : IVariableGroupAdapter
                 filteredVariableGroups = filteredVariableGroups.Where(vg => payload.PotentialVariableGroups.Contains(vg.Name));
             }
 
-            if(payload.KeyIsRegex ?? false)
+            var result = new List<SimplifiedVGResponse>();
+
+            if (payload.KeyIsRegex ?? false)
             {
                 Regex keyRegex;
                 try
                 {
                     keyRegex = new Regex(payload.KeyFilter.ToLower(), RegexOptions.None, TimeSpan.FromMilliseconds(5));
-                    filteredVariableGroups = filteredVariableGroups.Where(
-                        vg => _variableFilterService.Filter(vg.Variables, keyRegex).Any()
-                        ).ToList();
+                    foreach (var vg in filteredVariableGroups)
+                    {
+                        var matchedVariables = _variableFilterService.Filter(vg.Variables, keyRegex);
+                        var newDict = new Dictionary<string, VariableValue>(matchedVariables);
+                        result.Add(
+                            new SimplifiedVGResponse
+                            {
+                                Name = vg.Name,
+                                Type = vg.Type,
+                                Id = vg.Id,
+                                Description = vg.Description,
+                                Variables = newDict
+                            }
+                        );
+                    }
                 }
                 catch (RegexParseException ex)
                 {
                     _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", payload.KeyFilter);
-                    filteredVariableGroups = filteredVariableGroups.Where(
-                        vg => _variableFilterService.Filter(vg.Variables, payload.KeyFilter).Any()
-                        ).ToList();
+                    foreach(var vg in filteredVariableGroups)
+                    {
+                        var matchedVariables = _variableFilterService.Filter(vg.Variables, payload.KeyFilter);
+                        var newDict = new Dictionary<string, VariableValue>(matchedVariables);
+                        result.Add(
+                            new SimplifiedVGResponse
+                            {
+                                Name = vg.Name,
+                                Type = vg.Type,
+                                Id = vg.Id,
+                                Description = vg.Description,
+                                Variables = newDict
+                            }
+                        );
+                    }
                 }
             } else
             {
-                filteredVariableGroups = filteredVariableGroups.Where(
-                        vg => _variableFilterService.Filter(vg.Variables, payload.KeyFilter).Any()
-                        ).ToList();
+                foreach(var vg in filteredVariableGroups)
+                {
+                    var matchedVariables = _variableFilterService.Filter(vg.Variables, payload.KeyFilter);
+                    var newDict = new Dictionary<string, VariableValue>(matchedVariables);
+                    result.Add(
+                        new SimplifiedVGResponse
+                        {
+                            Name = vg.Name,
+                            Type = vg.Type,
+                            Id = vg.Id,
+                            Description = vg.Description,
+                            Variables = newDict
+                        }
+                    );
+                }
             }
 
-            return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, filteredVariableGroups));
+            return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, result));
         }
         catch (VssUnauthorizedException ex)
         {
             var status = AdapterStatus.Unauthorized;
             _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
-            return ResponseProvider.GetResponse(GetResult(status));
+            return ResponseProvider.GetResponse(GetEmptyResult(status));
         }
         catch (VssServiceResponseException ex)
         {
             var status = AdapterStatus.ResourceNotFound;
             _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
-            return ResponseProvider.GetResponse(GetResult(status));
+            return ResponseProvider.GetResponse(GetEmptyResult(status));
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
             var status = AdapterStatus.ProjectDoesNotExist;
             _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
-            return ResponseProvider.GetResponse(GetResult(status));
+            return ResponseProvider.GetResponse(GetEmptyResult(status));
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
             _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
-            return ResponseProvider.GetResponse(GetResult(status));
+            return ResponseProvider.GetResponse(GetEmptyResult(status));
         }
     }
 
@@ -187,6 +225,27 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         {
             Status = status,
             Data = variableGroups
+        };
+    }
+
+    private static AdapterResponseModel<IEnumerable<SimplifiedVGResponse>> GetResult(
+        AdapterStatus status, 
+        IEnumerable<SimplifiedVGResponse> variableGroups
+        )
+    {
+        return new()
+        {
+            Status = status,
+            Data = variableGroups
+        };
+    }
+
+    private static AdapterResponseModel<IEnumerable<SimplifiedVGResponse>> GetEmptyResult(AdapterStatus status)
+    {
+        return new()
+        {
+            Status = status,
+            Data = Enumerable.Empty<SimplifiedVGResponse>()
         };
     }
 

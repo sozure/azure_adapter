@@ -165,5 +165,15 @@ public static class ResponseProvider
             Data = result
         };
     }
+
+    public static BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>> GetResponse(
+        AdapterResponseModel<IEnumerable<SimplifiedVGResponse>> result
+        )
+    {
+        return new()
+        {
+            Data = result
+        };
+    }
 }
 
