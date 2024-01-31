@@ -6,4 +6,5 @@ public class CreateTagRequest : ExtendedBaseRequest
     public string TagName { get; set; } = null!;
     public string UserName { get; set; } = null!;
     public string DefaultBranch { get; set; } = null!;
+    public string? Description { get; set; } = null!;
 }
