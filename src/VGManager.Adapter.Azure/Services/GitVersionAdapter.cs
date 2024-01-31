@@ -107,6 +107,7 @@ public class GitVersionAdapter : IGitVersionAdapter
             var repositoryId = payload.RepositoryId;
             var project = payload.Project;
             var tag = payload.TagName;
+            var description = payload.Description;
             _clientProvider.Setup(payload.Organization, payload.PAT);
             _logger.LogInformation("Request git tags from {project} git project.", repositoryId);
             using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
@@ -122,7 +123,7 @@ public class GitVersionAdapter : IGitVersionAdapter
             var gitAnnotatedTag = new GitAnnotatedTag
             {
                 Name = tag,
-                Message = $"Release {sprint.Item2}",
+                Message = string.IsNullOrEmpty(description) ? $"Release {sprint.Item2}" : $"Release {sprint.Item2}: {description}",
                 TaggedBy = new GitUserDate
                 {
                     Date = DateTime.UtcNow,
