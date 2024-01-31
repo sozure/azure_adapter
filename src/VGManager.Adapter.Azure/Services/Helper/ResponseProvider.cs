@@ -166,6 +166,16 @@ public static class ResponseProvider
         };
     }
 
+    public static BaseResponse<AdapterResponseModel<IEnumerable<AdapterResponseModel<SimplifiedSecretResponse?>>>> GetResponse(
+        AdapterResponseModel<IEnumerable<AdapterResponseModel<SimplifiedSecretResponse?>>> result
+        )
+    {
+        return new()
+        {
+            Data = result
+        };
+    }
+
     public static BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>> GetResponse(
         AdapterResponseModel<IEnumerable<SimplifiedVGResponse>> result
         )

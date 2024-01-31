@@ -141,7 +141,7 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         }
     }
 
-    public async Task<BaseResponse<AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>>>> GetSecretsAsync(
+    public async Task<BaseResponse<AdapterResponseModel<IEnumerable<AdapterResponseModel<SimplifiedSecretResponse?>>>>> GetSecretsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -151,9 +151,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         {
             if (payload is null)
             {
-                return ResponseProvider.GetResponse(new AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>>()
+                return ResponseProvider.GetResponse(new AdapterResponseModel<IEnumerable<AdapterResponseModel<SimplifiedSecretResponse?>>>()
                 {
-                    Data = Enumerable.Empty<AdapterResponseModel<KeyVaultSecret?>>(),
+                    Data = Enumerable.Empty<AdapterResponseModel<SimplifiedSecretResponse?>>(),
                     Status = AdapterStatus.Unknown
                 });
             }
@@ -178,7 +178,26 @@ public class KeyVaultAdapter : IKeyVaultAdapter
                 return ResponseProvider.GetResponse(GetSecretsResult(AdapterStatus.Unknown));
             }
 
-            return ResponseProvider.GetResponse(GetSecretsResult(results.Select(result => result.Data)));
+            var result = new List<AdapterResponseModel<SimplifiedSecretResponse?>>();
+
+            foreach (var item in results)
+            {
+                var secret = item.Data.Data;
+                if (secret is not null)
+                {
+                    result.Add(new()
+                    {
+                        Status = item.Data.Status,
+                        Data = new SimplifiedSecretResponse
+                        {
+                            SecretName = secret.Name,
+                            SecretValue = secret.Value
+                        }
+                    });
+                }
+            }
+
+            return ResponseProvider.GetResponse(GetSecretsResult(result));
         }
         catch (Exception ex)
         {
@@ -388,8 +407,8 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         };
     }
 
-    private static AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>> GetSecretsResult(
-        IEnumerable<AdapterResponseModel<KeyVaultSecret?>> secrets
+    private static AdapterResponseModel<IEnumerable<AdapterResponseModel<SimplifiedSecretResponse?>>> GetSecretsResult(
+        IEnumerable<AdapterResponseModel<SimplifiedSecretResponse?>> secrets
         )
     {
         return new()
@@ -399,12 +418,12 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         };
     }
 
-    private static AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>> GetSecretsResult(AdapterStatus status)
+    private static AdapterResponseModel<IEnumerable<AdapterResponseModel<SimplifiedSecretResponse?>>> GetSecretsResult(AdapterStatus status)
     {
         return new()
         {
             Status = status,
-            Data = Enumerable.Empty<AdapterResponseModel<KeyVaultSecret?>>()
+            Data = Enumerable.Empty<AdapterResponseModel<SimplifiedSecretResponse?>>()
         };
     }
 
