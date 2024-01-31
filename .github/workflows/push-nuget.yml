@@ -23,7 +23,7 @@ jobs:
       
     - name: Pack
       working-directory: ./src/VGManager.Adapter.Models
-      run: dotnet pack --no-build --configuration Release /p:Version=1.8.0
+      run: dotnet pack --no-build --configuration Release /p:Version=1.9.0
 
     - name: Pack
       working-directory: ./src/VGManager.Adapter.Client
