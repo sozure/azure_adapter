@@ -64,10 +64,8 @@ public class VariableGroupAdapter : IVariableGroupAdapter
 
             if (payload.KeyIsRegex ?? false)
             {
-                Regex keyRegex;
                 try
                 {
-                    keyRegex = new Regex(payload.KeyFilter.ToLower(), RegexOptions.None, TimeSpan.FromMilliseconds(5));
                     foreach (var vg in filteredVariableGroups)
                     {
                         AddToResult(result, vg, vg.Variables);
