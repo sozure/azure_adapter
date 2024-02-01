@@ -70,8 +70,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
                     keyRegex = new Regex(payload.KeyFilter.ToLower(), RegexOptions.None, TimeSpan.FromMilliseconds(5));
                     foreach (var vg in filteredVariableGroups)
                     {
-                        var matchedVariables = _variableFilterService.Filter(vg.Variables, keyRegex);
-                        AddToResult(result, vg, matchedVariables);
+                        AddToResult(result, vg, vg.Variables);
                     }
                 }
                 catch (RegexParseException ex)
@@ -79,16 +78,14 @@ public class VariableGroupAdapter : IVariableGroupAdapter
                     _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", payload.KeyFilter);
                     foreach(var vg in filteredVariableGroups)
                     {
-                        var matchedVariables = _variableFilterService.Filter(vg.Variables, payload.KeyFilter);
-                        AddToResult(result, vg, matchedVariables);
+                        AddToResult(result, vg, vg.Variables);
                     }
                 }
             } else
             {
                 foreach(var vg in filteredVariableGroups)
                 {
-                    var matchedVariables = _variableFilterService.Filter(vg.Variables, payload.KeyFilter);
-                    AddToResult(result, vg, matchedVariables);
+                    AddToResult(result, vg, vg.Variables);
                 }
             }
 
@@ -212,15 +209,6 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         result.Add(res);
     }
 
-    private static AdapterResponseModel<IEnumerable<VariableGroup>> GetResult(AdapterStatus status, IEnumerable<VariableGroup> variableGroups)
-    {
-        return new()
-        {
-            Status = status,
-            Data = variableGroups
-        };
-    }
-
     private static AdapterResponseModel<IEnumerable<SimplifiedVGResponse>> GetResult(
         AdapterStatus status, 
         IEnumerable<SimplifiedVGResponse> variableGroups
@@ -239,15 +227,6 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         {
             Status = status,
             Data = Enumerable.Empty<SimplifiedVGResponse>()
-        };
-    }
-
-    private static AdapterResponseModel<IEnumerable<VariableGroup>> GetResult(AdapterStatus status)
-    {
-        return new()
-        {
-            Status = status,
-            Data = Enumerable.Empty<VariableGroup>()
         };
     }
 }
