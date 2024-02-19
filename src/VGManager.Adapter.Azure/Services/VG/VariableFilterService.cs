@@ -3,7 +3,7 @@ using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using System.Text.RegularExpressions;
 using VGManager.Adapter.Azure.Services.Interfaces;
 
-namespace VGManager.Adapter.Azure.Services;
+namespace VGManager.Adapter.Azure.Services.VG;
 
 public class VariableFilterService : IVariableFilterService
 {

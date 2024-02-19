@@ -1,6 +1,6 @@
-namespace VGManager.Adapter.Models.Requests;
+namespace VGManager.Adapter.Models.Requests.VG;
 
-public class GetVGRequest: ExtendedBaseRequest
+public class GetVGRequest : ExtendedBaseRequest
 {
     public bool? KeyIsRegex { get; set; }
     public string KeyFilter { get; set; } = null!;
