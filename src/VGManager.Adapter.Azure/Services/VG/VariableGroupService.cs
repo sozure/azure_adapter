@@ -43,7 +43,7 @@ public class VariableGroupService: IVariableGroupService
                     Data = new AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>(),
                 };
             }
-            return await _variableGroupAdapter.GetAllAsync(payload, cancellationToken);
+            return await _variableGroupAdapter.GetAllAsync(payload, true, cancellationToken);
         } catch (Exception)
         {
             return new BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>
@@ -473,7 +473,7 @@ public class VariableGroupService: IVariableGroupService
             KeyFilter = variableGroupModel.KeyFilter,
         };
 
-        return await _variableGroupAdapter.GetAllAsync(request, cancellationToken);
+        return await _variableGroupAdapter.GetAllAsync(request, false, cancellationToken);
     }
 
     private static BaseResponse<AdapterStatus> GetResult(AdapterStatus status)

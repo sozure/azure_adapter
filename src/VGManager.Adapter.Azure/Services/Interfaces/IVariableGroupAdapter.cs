@@ -9,6 +9,7 @@ public interface IVariableGroupAdapter
 {
     Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllAsync(
         GetVGRequest request,
+        bool lightWeightRequest,
         CancellationToken cancellationToken = default
         );
     Task<BaseResponse<AdapterResponseModel<int>>> GetNumberOfFoundVGsAsync(

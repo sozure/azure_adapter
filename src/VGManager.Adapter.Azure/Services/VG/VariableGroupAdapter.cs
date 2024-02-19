@@ -5,7 +5,6 @@ using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using System.Text.RegularExpressions;
-using System.Threading;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Models;
@@ -34,12 +33,13 @@ public class VariableGroupAdapter : IVariableGroupAdapter
 
     public async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllAsync(
         GetVGRequest request,
+        bool lightWeightRequest,
         CancellationToken cancellationToken = default
         )
     {
         try
         {
-            return await GetAllVGsAsync(request, cancellationToken);
+            return await GetAllVGsAsync(request, lightWeightRequest, cancellationToken);
         }
         catch (VssUnauthorizedException ex)
         {
@@ -83,7 +83,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
                 });
             }
 
-            var result = await GetAllVGsAsync(request, cancellationToken);
+            var result = await GetAllVGsAsync(request, true, cancellationToken);
             return ResponseProvider.GetResponse(new AdapterResponseModel<int>()
             {
                 Data = result.Data.Data.Count(),
@@ -186,6 +186,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
 
     private async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllVGsAsync(
         GetVGRequest request,
+        bool lightWeightRequest,
         CancellationToken cancellationToken
         )
     {
@@ -204,35 +205,84 @@ public class VariableGroupAdapter : IVariableGroupAdapter
             filteredVariableGroups = filteredVariableGroups.Where(vg => request.PotentialVariableGroups.Contains(vg.Name));
         }
 
+        var result = CollectResult(request, lightWeightRequest, filteredVariableGroups);
+        return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, result));
+    }
+
+    private List<SimplifiedVGResponse> CollectResult(
+        GetVGRequest request, 
+        bool lightWeightRequest, 
+        IEnumerable<VariableGroup> filteredVariableGroups
+        )
+    {
         var result = new List<SimplifiedVGResponse>();
 
         if (request.KeyIsRegex ?? false)
         {
             try
             {
-                foreach (var vg in filteredVariableGroups)
-                {
-                    AddToResult(result, vg, vg.Variables);
-                }
+                var regex = new Regex(request.KeyFilter.ToLower(), RegexOptions.None, TimeSpan.FromMilliseconds(5000));
+                var subResult = CollectSubResult(regex, lightWeightRequest, filteredVariableGroups);
+                result.AddRange(subResult);
             }
             catch (RegexParseException ex)
             {
                 _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", request.KeyFilter);
-                foreach (var vg in filteredVariableGroups)
-                {
-                    AddToResult(result, vg, vg.Variables);
-                }
+                var subResult = CollectSubResult(request.KeyFilter, lightWeightRequest, filteredVariableGroups);
+                result.AddRange(subResult);
             }
         }
         else
         {
-            foreach (var vg in filteredVariableGroups)
-            {
-                AddToResult(result, vg, vg.Variables);
-            }
+            var subResult = CollectSubResult(request.KeyFilter, lightWeightRequest, filteredVariableGroups);
+            result.AddRange(subResult);
         }
 
-        return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, result));
+        return result;
+    }
+
+    private IEnumerable<SimplifiedVGResponse> CollectSubResult(
+        Regex regex, 
+        bool lightWeightRequest, 
+        IEnumerable<VariableGroup> filteredVariableGroups
+        )
+    {
+        var subResult = new List<SimplifiedVGResponse>();
+        foreach (var vg in filteredVariableGroups)
+        {
+            if (lightWeightRequest)
+            {
+                var matchedVariables = _variableFilterService.Filter(vg.Variables, regex);
+                AddToResult(subResult, vg, matchedVariables);
+            }
+            else
+            {
+                AddToResult(subResult, vg, vg.Variables);
+            }
+        }
+        return subResult;
+    }
+
+    private IEnumerable<SimplifiedVGResponse> CollectSubResult(
+        string keyFilter,
+        bool lightWeightRequest, 
+        IEnumerable<VariableGroup> filteredVariableGroups
+        )
+    {
+        var subResult = new List<SimplifiedVGResponse>();
+        foreach (var vg in filteredVariableGroups)
+        {
+            if (lightWeightRequest)
+            {
+                var matchedVariables = _variableFilterService.Filter(vg.Variables, keyFilter);
+                AddToResult(subResult, vg, matchedVariables);
+            }
+            else
+            {
+                AddToResult(subResult, vg, vg.Variables);
+            }
+        }
+        return subResult;
     }
 
     private static void AddToResult(
