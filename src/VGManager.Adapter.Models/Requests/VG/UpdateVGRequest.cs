@@ -1,6 +1,6 @@
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
 
-namespace VGManager.Adapter.Models.Requests;
+namespace VGManager.Adapter.Models.Requests.VG;
 
 public class UpdateVGRequest : ExtendedBaseRequest
 {

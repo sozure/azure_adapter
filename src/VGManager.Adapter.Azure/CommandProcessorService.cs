@@ -20,7 +20,7 @@ public class CommandProcessorService : ICommandProcessorService
     private readonly IProfileAdapter _profileAdapter;
     private readonly IProjectAdapter _projectAdapter;
     private readonly IReleasePipelineAdapter _releasePipelineAdapter;
-    private readonly IVariableGroupAdapter _variableGroupAdapter;
+    private readonly IVariableGroupService _variableGroupService;
     private readonly IMapper _mapper;
     private readonly ILogger _logger;
 
@@ -34,7 +34,7 @@ public class CommandProcessorService : ICommandProcessorService
         IProfileAdapter profileAdapter,
         IProjectAdapter projectAdapter,
         IReleasePipelineAdapter releasePipelineAdapter,
-        IVariableGroupAdapter variableGroupAdapter,
+        IVariableGroupService variableGroupService,
         IMapper mapper,
         ILogger<CommandProcessorService> logger
     )
@@ -48,7 +48,7 @@ public class CommandProcessorService : ICommandProcessorService
         _profileAdapter = profileAdapter;
         _projectAdapter = projectAdapter;
         _releasePipelineAdapter = releasePipelineAdapter;
-        _variableGroupAdapter = variableGroupAdapter;
+        _variableGroupService = variableGroupService;
         _mapper = mapper;
         _logger = logger;
     }
@@ -128,14 +128,26 @@ public class CommandProcessorService : ICommandProcessorService
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetAllVGRequest => await _variableGroupAdapter.GetAllAsync(
+                CommandTypes.GetAllVGRequest => await _variableGroupService.GetAllAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.UpdateVGRequest => await _variableGroupAdapter.UpdateAsync(
+                CommandTypes.GetNumberOfFoundVGsRequest => await _variableGroupService.GetNumberOfFoundVGsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
+                CommandTypes.UpdateVGRequest => await _variableGroupService.UpdateAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                    ),
+                CommandTypes.AddVGRequest => await _variableGroupService.AddVariablesAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
+                CommandTypes.DeleteVGRequest => await _variableGroupService.DeleteVariablesAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
                 CommandTypes.GetKeyVaultsRequest => await _keyVaultAdapter.GetKeyVaultsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken

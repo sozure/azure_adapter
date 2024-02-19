@@ -5,15 +5,15 @@ using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using System.Text.RegularExpressions;
+using System.Threading;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
-using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Models;
-using VGManager.Adapter.Models.Requests;
+using VGManager.Adapter.Models.Requests.VG;
 using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
 
-namespace VGManager.Adapter.Azure.Services;
+namespace VGManager.Adapter.Azure.Services.VG;
 
 public class VariableGroupAdapter : IVariableGroupAdapter
 {
@@ -33,61 +33,13 @@ public class VariableGroupAdapter : IVariableGroupAdapter
     }
 
     public async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllAsync(
-        VGManagerAdapterCommand command,
+        GetVGRequest request,
         CancellationToken cancellationToken = default
         )
     {
-        var payload = PayloadProvider<GetVGRequest>.GetPayload(command.Payload);
         try
         {
-            if (payload is null)
-            {
-                var status = AdapterStatus.Unknown;
-                return ResponseProvider.GetResponse(GetEmptyResult(status));
-            }
-            var project = payload.Project;
-            _clientProvider.Setup(payload.Organization, payload.PAT);
-            _logger.LogInformation("Request variable groups from {project} Azure project.", project);
-            using var client = await _clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
-            var variableGroups = await client.GetVariableGroupsAsync(project, cancellationToken: cancellationToken);
-
-            var filteredVariableGroups = payload.ContainsSecrets ?
-                        _variableFilterService.Filter(variableGroups, payload.VariableGroupFilter) :
-                        _variableFilterService.FilterWithoutSecrets(payload.FilterAsRegex, payload.VariableGroupFilter, variableGroups);
-
-            if (payload.PotentialVariableGroups is not null)
-            {
-                filteredVariableGroups = filteredVariableGroups.Where(vg => payload.PotentialVariableGroups.Contains(vg.Name));
-            }
-
-            var result = new List<SimplifiedVGResponse>();
-
-            if (payload.KeyIsRegex ?? false)
-            {
-                try
-                {
-                    foreach (var vg in filteredVariableGroups)
-                    {
-                        AddToResult(result, vg, vg.Variables);
-                    }
-                }
-                catch (RegexParseException ex)
-                {
-                    _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", payload.KeyFilter);
-                    foreach(var vg in filteredVariableGroups)
-                    {
-                        AddToResult(result, vg, vg.Variables);
-                    }
-                }
-            } else
-            {
-                foreach(var vg in filteredVariableGroups)
-                {
-                    AddToResult(result, vg, vg.Variables);
-                }
-            }
-
-            return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, result));
+            return await GetAllVGsAsync(request, cancellationToken);
         }
         catch (VssUnauthorizedException ex)
         {
@@ -115,20 +67,68 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         }
     }
 
-    public async Task<BaseResponse<AdapterStatus>> UpdateAsync(
-        VGManagerAdapterCommand command,
+    public async Task<BaseResponse<AdapterResponseModel<int>>> GetNumberOfFoundVGsAsync(
+        GetVGRequest request,
         CancellationToken cancellationToken = default
         )
     {
-        var payload = PayloadProvider<UpdateVGRequest>.GetPayload(command.Payload);
-        if (payload is null)
+        try
+        {
+            if(request is null)
+            {
+                return ResponseProvider.GetResponse(new AdapterResponseModel<int>()
+                {
+                    Data = 0,
+                    Status = AdapterStatus.Unknown
+                });
+            }
+
+            var result = await GetAllVGsAsync(request, cancellationToken);
+            return ResponseProvider.GetResponse(new AdapterResponseModel<int>()
+            {
+                Data = result.Data.Data.Count(),
+                Status = result.Data.Status
+            });
+        }
+        catch (VssUnauthorizedException ex)
+        {
+            var status = AdapterStatus.Unauthorized;
+            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            return ResponseProvider.GetResponse(GetEmptyCountResult(status));
+        }
+        catch (VssServiceResponseException ex)
+        {
+            var status = AdapterStatus.ResourceNotFound;
+            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            return ResponseProvider.GetResponse(GetEmptyCountResult(status));
+        }
+        catch (ProjectDoesNotExistWithNameException ex)
+        {
+            var status = AdapterStatus.ProjectDoesNotExist;
+            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            return ResponseProvider.GetResponse(GetEmptyCountResult(status));
+        }
+        catch (Exception ex)
+        {
+            var status = AdapterStatus.Unknown;
+            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            return ResponseProvider.GetResponse(GetEmptyCountResult(status));
+        }
+    }
+
+    public async Task<BaseResponse<AdapterStatus>> UpdateAsync(
+        UpdateVGRequest request,
+        CancellationToken cancellationToken = default
+        )
+    {
+        if (request is null)
         {
             return ResponseProvider.GetResponse(AdapterStatus.Unknown);
         }
 
-        var variableGroupName = payload.Params.Name;
-        var project = payload.Project;
-        payload.Params.VariableGroupProjectReferences = new List<VariableGroupProjectReference>()
+        var variableGroupName = request.Params.Name;
+        var project = request.Project;
+        request.Params.VariableGroupProjectReferences = new List<VariableGroupProjectReference>()
         {
             new()
             {
@@ -142,10 +142,10 @@ public class VariableGroupAdapter : IVariableGroupAdapter
 
         try
         {
-            _clientProvider.Setup(payload.Organization, payload.PAT);
+            _clientProvider.Setup(request.Organization, request.PAT);
             _logger.LogDebug("Update variable group with name: {variableGroupName} in {project} Azure project.", variableGroupName, project);
             using var client = await _clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
-            await client!.UpdateVariableGroupAsync(payload.VariableGroupId, payload.Params, cancellationToken: cancellationToken);
+            await client!.UpdateVariableGroupAsync(request.VariableGroupId, request.Params, cancellationToken: cancellationToken);
             return ResponseProvider.GetResponse(AdapterStatus.Success);
         }
         catch (VssUnauthorizedException ex)
@@ -184,6 +184,57 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         }
     }
 
+    private async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllVGsAsync(
+        GetVGRequest request,
+        CancellationToken cancellationToken
+        )
+    {
+        var project = request.Project;
+        _clientProvider.Setup(request.Organization, request.PAT);
+        _logger.LogInformation("Request variable groups from {project} Azure project.", project);
+        using var client = await _clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
+        var variableGroups = await client.GetVariableGroupsAsync(project, cancellationToken: cancellationToken);
+
+        var filteredVariableGroups = request.ContainsSecrets ?
+                    _variableFilterService.Filter(variableGroups, request.VariableGroupFilter) :
+                    _variableFilterService.FilterWithoutSecrets(request.FilterAsRegex, request.VariableGroupFilter, variableGroups);
+
+        if (request.PotentialVariableGroups is not null)
+        {
+            filteredVariableGroups = filteredVariableGroups.Where(vg => request.PotentialVariableGroups.Contains(vg.Name));
+        }
+
+        var result = new List<SimplifiedVGResponse>();
+
+        if (request.KeyIsRegex ?? false)
+        {
+            try
+            {
+                foreach (var vg in filteredVariableGroups)
+                {
+                    AddToResult(result, vg, vg.Variables);
+                }
+            }
+            catch (RegexParseException ex)
+            {
+                _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", request.KeyFilter);
+                foreach (var vg in filteredVariableGroups)
+                {
+                    AddToResult(result, vg, vg.Variables);
+                }
+            }
+        }
+        else
+        {
+            foreach (var vg in filteredVariableGroups)
+            {
+                AddToResult(result, vg, vg.Variables);
+            }
+        }
+
+        return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, result));
+    }
+
     private static void AddToResult(
         List<SimplifiedVGResponse> result,
         VariableGroup vg,
@@ -207,17 +258,8 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         result.Add(res);
     }
 
-    private static AdapterResponseModel<IEnumerable<VariableGroup>> GetResult(AdapterStatus status, IEnumerable<VariableGroup> variableGroups)
-    {
-        return new()
-        {
-            Status = status,
-            Data = variableGroups
-        };
-    }
-
     private static AdapterResponseModel<IEnumerable<SimplifiedVGResponse>> GetResult(
-        AdapterStatus status, 
+        AdapterStatus status,
         IEnumerable<SimplifiedVGResponse> variableGroups
         )
     {
@@ -237,12 +279,12 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         };
     }
 
-    private static AdapterResponseModel<IEnumerable<VariableGroup>> GetResult(AdapterStatus status)
+    private static AdapterResponseModel<int> GetEmptyCountResult(AdapterStatus status)
     {
         return new()
         {
             Status = status,
-            Data = Enumerable.Empty<VariableGroup>()
+            Data = 0
         };
     }
 }
