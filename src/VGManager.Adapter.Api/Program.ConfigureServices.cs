@@ -8,6 +8,7 @@ using VGManager.Adapter.Azure;
 using VGManager.Adapter.Azure.Services;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
+using VGManager.Adapter.Azure.Services.VG;
 using VGManager.Adapter.Interfaces;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Communication.Kafka.Extensions;
@@ -71,6 +72,7 @@ static partial class Program
 
         services.AddScoped<IVariableGroupAdapter, VariableGroupAdapter>();
         services.AddScoped<IVariableFilterService, VariableFilterService>();
+        services.AddScoped<IVariableGroupService, VariableGroupService>();
         services.AddScoped<IProjectAdapter, ProjectAdapter>();
         services.AddScoped<IKeyVaultAdapter, KeyVaultAdapter>();
         services.AddScoped<IHttpClientProvider, HttpClientProvider>();

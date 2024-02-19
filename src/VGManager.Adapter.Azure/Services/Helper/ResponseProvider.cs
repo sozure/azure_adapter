@@ -185,5 +185,15 @@ public static class ResponseProvider
             Data = result
         };
     }
+
+    public static BaseResponse<AdapterResponseModel<int>> GetResponse(
+        AdapterResponseModel<int> result
+        )
+    {
+        return new()
+        {
+            Data = result
+        };
+    }
 }
 

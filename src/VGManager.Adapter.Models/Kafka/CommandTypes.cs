@@ -18,7 +18,10 @@ public static class CommandTypes
     public const string GetVariableGroupsRequest = nameof(GetVariableGroupsRequest);
     public const string GetProjectsRequest = nameof(GetProjectsRequest);
     public const string GetAllVGRequest = nameof(GetAllVGRequest);
+    public const string GetNumberOfFoundVGsRequest = nameof(GetNumberOfFoundVGsRequest);
     public const string UpdateVGRequest = nameof(UpdateVGRequest);
+    public const string AddVGRequest = nameof(AddVGRequest);
+    public const string DeleteVGRequest = nameof(DeleteVGRequest);
     public const string GetKeyVaultsRequest = nameof(GetKeyVaultsRequest);
     public const string GetSecretRequest = nameof(GetSecretRequest);
     public const string DeleteSecretRequest = nameof(DeleteSecretRequest);
