@@ -1,3 +1,4 @@
+using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using VGManager.Adapter.Models.Models;
 using VGManager.Adapter.Models.Requests.VG;
 using VGManager.Adapter.Models.Response;
@@ -7,7 +8,7 @@ namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IVariableGroupAdapter
 {
-    Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllAsync(
+    Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<VariableValue>>>>> GetAllAsync(
         GetVGRequest request,
         bool lightWeightRequest,
         CancellationToken cancellationToken = default
