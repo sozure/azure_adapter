@@ -1,3 +1,4 @@
+using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Models;
 using VGManager.Adapter.Models.Response;
@@ -7,7 +8,7 @@ namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IVariableGroupService
 {
-    Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllAsync(
+    Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>>> GetAllAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );

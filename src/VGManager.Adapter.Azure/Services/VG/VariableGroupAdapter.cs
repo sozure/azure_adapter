@@ -5,7 +5,6 @@ using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using System.Text.RegularExpressions;
-using System.Threading;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Models;
@@ -32,38 +31,39 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         _logger = logger;
     }
 
-    public async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllAsync(
+    public async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<VariableValue>>>>> GetAllAsync(
         GetVGRequest request,
+        bool lightWeightRequest,
         CancellationToken cancellationToken = default
         )
     {
         try
         {
-            return await GetAllVGsAsync(request, cancellationToken);
+            return await GetAllVGsAsync(request, lightWeightRequest, cancellationToken);
         }
         catch (VssUnauthorizedException ex)
         {
             var status = AdapterStatus.Unauthorized;
             _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
-            return ResponseProvider.GetResponse(GetEmptyResult(status));
+            return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
         catch (VssServiceResponseException ex)
         {
             var status = AdapterStatus.ResourceNotFound;
             _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
-            return ResponseProvider.GetResponse(GetEmptyResult(status));
+            return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
             var status = AdapterStatus.ProjectDoesNotExist;
             _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
-            return ResponseProvider.GetResponse(GetEmptyResult(status));
+            return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
             _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
-            return ResponseProvider.GetResponse(GetEmptyResult(status));
+            return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
     }
 
@@ -83,7 +83,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
                 });
             }
 
-            var result = await GetAllVGsAsync(request, cancellationToken);
+            var result = await GetAllVGsAsync(request, true, cancellationToken);
             return ResponseProvider.GetResponse(new AdapterResponseModel<int>()
             {
                 Data = result.Data.Data.Count(),
@@ -184,8 +184,9 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         }
     }
 
-    private async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllVGsAsync(
+    private async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<VariableValue>>>>> GetAllVGsAsync(
         GetVGRequest request,
+        bool lightWeightRequest,
         CancellationToken cancellationToken
         )
     {
@@ -204,45 +205,94 @@ public class VariableGroupAdapter : IVariableGroupAdapter
             filteredVariableGroups = filteredVariableGroups.Where(vg => request.PotentialVariableGroups.Contains(vg.Name));
         }
 
-        var result = new List<SimplifiedVGResponse>();
+        var result = CollectResult(request, lightWeightRequest, filteredVariableGroups);
+        return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, result));
+    }
+
+    private List<SimplifiedVGResponse<VariableValue>> CollectResult(
+        GetVGRequest request, 
+        bool lightWeightRequest, 
+        IEnumerable<VariableGroup> filteredVariableGroups
+        )
+    {
+        var result = new List<SimplifiedVGResponse<VariableValue>>();
 
         if (request.KeyIsRegex ?? false)
         {
             try
             {
-                foreach (var vg in filteredVariableGroups)
-                {
-                    AddToResult(result, vg, vg.Variables);
-                }
+                var regex = new Regex(request.KeyFilter.ToLower(), RegexOptions.None, TimeSpan.FromMilliseconds(5000));
+                var subResult = CollectSubResult(regex, lightWeightRequest, filteredVariableGroups);
+                result.AddRange(subResult);
             }
             catch (RegexParseException ex)
             {
                 _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", request.KeyFilter);
-                foreach (var vg in filteredVariableGroups)
-                {
-                    AddToResult(result, vg, vg.Variables);
-                }
+                var subResult = CollectSubResult(request.KeyFilter, lightWeightRequest, filteredVariableGroups);
+                result.AddRange(subResult);
             }
         }
         else
         {
-            foreach (var vg in filteredVariableGroups)
-            {
-                AddToResult(result, vg, vg.Variables);
-            }
+            var subResult = CollectSubResult(request.KeyFilter, lightWeightRequest, filteredVariableGroups);
+            result.AddRange(subResult);
         }
 
-        return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, result));
+        return result;
+    }
+
+    private IEnumerable<SimplifiedVGResponse<VariableValue>> CollectSubResult(
+        Regex regex, 
+        bool lightWeightRequest, 
+        IEnumerable<VariableGroup> filteredVariableGroups
+        )
+    {
+        var subResultVar = new List<SimplifiedVGResponse<VariableValue>>();
+        foreach (var vg in filteredVariableGroups)
+        {
+            if (lightWeightRequest)
+            {
+                var matchedVariables = _variableFilterService.Filter(vg.Variables, regex);
+                AddToResult(subResultVar, vg, matchedVariables);
+            }
+            else
+            {
+                AddToResult(subResultVar, vg, vg.Variables);
+            }
+        }
+        return subResultVar;
+    }
+
+    private IEnumerable<SimplifiedVGResponse<VariableValue>> CollectSubResult(
+        string keyFilter,
+        bool lightWeightRequest, 
+        IEnumerable<VariableGroup> filteredVariableGroups
+        )
+    {
+        var subResult = new List<SimplifiedVGResponse<VariableValue>>();
+        foreach (var vg in filteredVariableGroups)
+        {
+            if (lightWeightRequest)
+            {
+                var matchedVariables = _variableFilterService.Filter(vg.Variables, keyFilter);
+                AddToResult(subResult, vg, matchedVariables);
+            }
+            else
+            {
+                AddToResult(subResult, vg, vg.Variables);
+            }
+        }
+        return subResult;
     }
 
     private static void AddToResult(
-        List<SimplifiedVGResponse> result,
+        List<SimplifiedVGResponse<VariableValue>> result,
         VariableGroup vg,
         IEnumerable<KeyValuePair<string, VariableValue>> matchedVariables
         )
     {
         var newDict = new Dictionary<string, VariableValue>(matchedVariables);
-        var res = new SimplifiedVGResponse
+        var res = new SimplifiedVGResponse<VariableValue>
         {
             Name = vg.Name,
             Type = vg.Type,
@@ -258,9 +308,9 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         result.Add(res);
     }
 
-    private static AdapterResponseModel<IEnumerable<SimplifiedVGResponse>> GetResult(
+    private static AdapterResponseModel<IEnumerable<SimplifiedVGResponse<T>>> GetResult<T>(
         AdapterStatus status,
-        IEnumerable<SimplifiedVGResponse> variableGroups
+        IEnumerable<SimplifiedVGResponse<T>> variableGroups
         )
     {
         return new()
@@ -270,12 +320,12 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         };
     }
 
-    private static AdapterResponseModel<IEnumerable<SimplifiedVGResponse>> GetEmptyResult(AdapterStatus status)
+    private static AdapterResponseModel<IEnumerable<SimplifiedVGResponse<T>>> GetEmptyResult<T>(AdapterStatus status)
     {
         return new()
         {
             Status = status,
-            Data = Enumerable.Empty<SimplifiedVGResponse>()
+            Data = Enumerable.Empty<SimplifiedVGResponse<T>>()
         };
     }
 

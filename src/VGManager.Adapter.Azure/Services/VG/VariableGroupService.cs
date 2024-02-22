@@ -28,7 +28,7 @@ public class VariableGroupService: IVariableGroupService
         _logger = logger;
     }
 
-    public async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllAsync(
+    public async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>>> GetAllAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -38,17 +38,33 @@ public class VariableGroupService: IVariableGroupService
             var payload = PayloadProvider<GetVGRequest>.GetPayload(command.Payload);
             if(payload is null)
             {
-                return new BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>
+                return new BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>>
                 {
-                    Data = new AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>(),
+                    Data = new AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>(),
                 };
             }
-            return await _variableGroupAdapter.GetAllAsync(payload, cancellationToken);
+            var result = await _variableGroupAdapter.GetAllAsync(payload, true, cancellationToken);
+
+            return new BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>>
+            {
+                Data = new AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>
+                {
+                    Data = result.Data.Data.Select(vg => new SimplifiedVGResponse<string>
+                    {
+                        Id = vg.Id,
+                        Name = vg.Name,
+                        Type = vg.Type,
+                        Description = vg.Description,
+                        Variables = vg.Variables.Select(v => new KeyValuePair<string, string>(v.Key, v.Value.Value)).ToDictionary()
+                    })
+                },
+            };
+
         } catch (Exception)
         {
-            return new BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>
+            return new BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>>
             {
-                Data = new AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>(),
+                Data = new AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>(),
             };
         }
         
@@ -195,7 +211,7 @@ public class VariableGroupService: IVariableGroupService
 
     private async Task<AdapterStatus> DeleteVariablesAsync(
         VariableGroupModel variableGroupModel,
-        IEnumerable<SimplifiedVGResponse> filteredVariableGroups,
+        IEnumerable<SimplifiedVGResponse<VariableValue>> filteredVariableGroups,
         CancellationToken cancellationToken
         )
     {
@@ -228,7 +244,7 @@ public class VariableGroupService: IVariableGroupService
         return deletionCounter1 == deletionCounter2 ? AdapterStatus.Success : AdapterStatus.Unknown;
     }
 
-    private bool DeleteVariables(SimplifiedVGResponse filteredVariableGroup, string keyFilter, string? valueCondition)
+    private bool DeleteVariables(SimplifiedVGResponse<VariableValue> filteredVariableGroup, string keyFilter, string? valueCondition)
     {
         var deleteIsNeeded = false;
         var filteredVariables = _variableFilterService.Filter(filteredVariableGroup.Variables, keyFilter);
@@ -256,7 +272,7 @@ public class VariableGroupService: IVariableGroupService
 
     private async Task<AdapterStatus> AddVariablesAsync(
         VariableGroupModel model,
-        IEnumerable<SimplifiedVGResponse> filteredVariableGroups,
+        IEnumerable<SimplifiedVGResponse<VariableValue>> filteredVariableGroups,
         string key,
         string value,
         CancellationToken cancellationToken
@@ -305,7 +321,7 @@ public class VariableGroupService: IVariableGroupService
         VariableGroupModel model,
         string key,
         string value,
-        SimplifiedVGResponse filteredVariableGroup,
+        SimplifiedVGResponse<VariableValue> filteredVariableGroup,
         CancellationToken cancellationToken
         )
     {
@@ -323,12 +339,12 @@ public class VariableGroupService: IVariableGroupService
         return false;
     }
 
-    private IEnumerable<SimplifiedVGResponse> CollectVariableGroups(
-        AdapterResponseModel<IEnumerable<SimplifiedVGResponse>> vgEntity,
+    private IEnumerable<SimplifiedVGResponse<VariableValue>> CollectVariableGroups(
+        AdapterResponseModel<IEnumerable<SimplifiedVGResponse<VariableValue>>> vgEntity,
         string? keyFilter
         )
     {
-        IEnumerable<SimplifiedVGResponse> filteredVariableGroups;
+        IEnumerable<SimplifiedVGResponse<VariableValue>> filteredVariableGroups;
         if (keyFilter is not null)
         {
             try
@@ -356,7 +372,7 @@ public class VariableGroupService: IVariableGroupService
     private async Task<AdapterStatus> UpdateVariableGroupsAsync(
         VariableGroupModel model,
         string newValue,
-        IEnumerable<SimplifiedVGResponse> filteredVariableGroups,
+        IEnumerable<SimplifiedVGResponse<VariableValue>> filteredVariableGroups,
         string keyFilter,
         Regex? valueRegex,
         CancellationToken cancellationToken
@@ -388,7 +404,7 @@ public class VariableGroupService: IVariableGroupService
 
     private async Task<AdapterStatus> SendUpdateAsync(
         VariableGroupModel model, 
-        SimplifiedVGResponse filteredVariableGroup, 
+        SimplifiedVGResponse<VariableValue> filteredVariableGroup, 
         VariableGroupParameters variableGroupParameters, 
         CancellationToken cancellationToken
         )
@@ -409,7 +425,7 @@ public class VariableGroupService: IVariableGroupService
         string newValue,
         string keyFilter,
         Regex? regex,
-        SimplifiedVGResponse filteredVariableGroup
+        SimplifiedVGResponse<VariableValue> filteredVariableGroup
         )
     {
         var filteredVariables = _variableFilterService.Filter(filteredVariableGroup.Variables, keyFilter);
@@ -444,7 +460,7 @@ public class VariableGroupService: IVariableGroupService
         return false;
     }
 
-    private static VariableGroupParameters GetVariableGroupParameters(SimplifiedVGResponse filteredVariableGroup, string variableGroupName)
+    private static VariableGroupParameters GetVariableGroupParameters(SimplifiedVGResponse<VariableValue> filteredVariableGroup, string variableGroupName)
     {
         return new()
         {
@@ -455,7 +471,7 @@ public class VariableGroupService: IVariableGroupService
         };
     }
 
-    private async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>>> GetAllAsync(
+    private async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<VariableValue>>>>> GetAllAsync(
         VariableGroupModel variableGroupModel,
         bool filterAsRegex,
         CancellationToken cancellationToken
@@ -473,7 +489,7 @@ public class VariableGroupService: IVariableGroupService
             KeyFilter = variableGroupModel.KeyFilter,
         };
 
-        return await _variableGroupAdapter.GetAllAsync(request, cancellationToken);
+        return await _variableGroupAdapter.GetAllAsync(request, false, cancellationToken);
     }
 
     private static BaseResponse<AdapterStatus> GetResult(AdapterStatus status)

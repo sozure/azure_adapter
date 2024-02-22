@@ -176,8 +176,8 @@ public static class ResponseProvider
         };
     }
 
-    public static BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse>>> GetResponse(
-        AdapterResponseModel<IEnumerable<SimplifiedVGResponse>> result
+    public static BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<T>>>> GetResponse<T>(
+        AdapterResponseModel<IEnumerable<SimplifiedVGResponse<T>>> result
         )
     {
         return new()
