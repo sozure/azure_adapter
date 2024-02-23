@@ -56,7 +56,8 @@ public class VariableGroupService: IVariableGroupService
                         Type = vg.Type,
                         Description = vg.Description,
                         Variables = vg.Variables.Select(v => new KeyValuePair<string, string>(v.Key, v.Value.Value)).ToDictionary()
-                    })
+                    }),
+                    Status = result.Data.Status
                 },
             };
 
