@@ -44,25 +44,25 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         catch (VssUnauthorizedException ex)
         {
             var status = AdapterStatus.Unauthorized;
-            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            _logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
         catch (VssServiceResponseException ex)
         {
             var status = AdapterStatus.ResourceNotFound;
-            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            _logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
             var status = AdapterStatus.ProjectDoesNotExist;
-            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            _logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            _logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
     }
