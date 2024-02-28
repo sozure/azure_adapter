@@ -23,6 +23,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VGManager.Adapter.Client", "VGManager.Adapter.Client\VGManager.Adapter.Client.csproj", "{D3626602-2032-4681-8950-E6D6C977781F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{43540B48-4CD2-4541-B580-F7E7D92F5E08}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VGManager.Adapter.Api.Tests", "VGManager.Adapter.Api.Tests\VGManager.Adapter.Api.Tests.csproj", "{E5F83A2D-3AA1-420D-AD6A-C5C1268F94F3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,9 +49,16 @@ Global
 		{D3626602-2032-4681-8950-E6D6C977781F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3626602-2032-4681-8950-E6D6C977781F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3626602-2032-4681-8950-E6D6C977781F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E5F83A2D-3AA1-420D-AD6A-C5C1268F94F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E5F83A2D-3AA1-420D-AD6A-C5C1268F94F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E5F83A2D-3AA1-420D-AD6A-C5C1268F94F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5F83A2D-3AA1-420D-AD6A-C5C1268F94F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E5F83A2D-3AA1-420D-AD6A-C5C1268F94F3} = {43540B48-4CD2-4541-B580-F7E7D92F5E08}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0C890856-AEB8-4A30-966C-C9C2C8CB5F78}
