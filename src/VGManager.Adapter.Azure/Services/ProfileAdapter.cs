@@ -9,17 +9,8 @@ using VGManager.Adapter.Models.Response;
 
 namespace VGManager.Adapter.Azure.Services;
 
-public class ProfileAdapter : IProfileAdapter
+public class ProfileAdapter(IHttpClientProvider clientProvider, ILogger<ProfileAdapter> logger) : IProfileAdapter
 {
-    private readonly IHttpClientProvider _clientProvider;
-    private readonly ILogger _logger;
-
-    public ProfileAdapter(IHttpClientProvider clientProvider, ILogger<ProfileAdapter> logger)
-    {
-        _clientProvider = clientProvider;
-        _logger = logger;
-    }
-
     public async Task<BaseResponse<Profile?>> GetProfileAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
@@ -34,16 +25,16 @@ public class ProfileAdapter : IProfileAdapter
                 return ResponseProvider.GetResponse(profile);
             }
 
-            _logger.LogInformation("Request profile from Azure DevOps.");
-            _clientProvider.Setup(payload.Organization, payload.PAT);
-            using var client = await _clientProvider.GetClientAsync<ProfileHttpClient>(cancellationToken);
+            logger.LogInformation("Request profile from Azure DevOps.");
+            clientProvider.Setup(payload.Organization, payload.PAT);
+            using var client = await clientProvider.GetClientAsync<ProfileHttpClient>(cancellationToken);
             var profileQueryContext = new ProfileQueryContext(AttributesScope.Core);
             var result = await client.GetProfileAsync(profileQueryContext, cancellationToken, cancellationToken);
             return ResponseProvider.GetResponse(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Couldn't get profile.");
+            logger.LogError(ex, "Couldn't get profile.");
             Profile? profile = null!;
             return ResponseProvider.GetResponse(profile);
         }

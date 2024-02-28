@@ -6,26 +6,18 @@ using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.StatusEnums;
 namespace VGManager.Adapter.Azure.Services;
 
-public class SprintAdapter : ISprintAdapter
+public class SprintAdapter(IHttpClientProvider clientProvider, ILogger<SprintAdapter> logger) : ISprintAdapter
 {
     private readonly Regex _regex = new(@".*\b(\d+)\b.*", RegexOptions.Compiled);
-    private readonly IHttpClientProvider _clientProvider;
-    private readonly ILogger _logger;
-
-    public SprintAdapter(IHttpClientProvider clientProvider, ILogger<SprintAdapter> logger)
-    {
-        _clientProvider = clientProvider;
-        _logger = logger;
-    }
 
     public async Task<(AdapterStatus, string)> GetCurrentSprintAsync(string project, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Request current sprint from {project} project.", project);
-            using var workHttpClient = await _clientProvider.GetClientAsync<WorkHttpClient>(cancellationToken);
-            using var projectClient = await _clientProvider.GetClientAsync<ProjectHttpClient>(cancellationToken);
-            using var teamClient = await _clientProvider.GetClientAsync<TeamHttpClient>(cancellationToken);
+            logger.LogInformation("Request current sprint from {project} project.", project);
+            using var workHttpClient = await clientProvider.GetClientAsync<WorkHttpClient>(cancellationToken);
+            using var projectClient = await clientProvider.GetClientAsync<ProjectHttpClient>(cancellationToken);
+            using var teamClient = await clientProvider.GetClientAsync<TeamHttpClient>(cancellationToken);
 
             var projects = await projectClient.GetProjects();
             var foundProject = projects.FirstOrDefault(x => x.Name == project);
@@ -55,7 +47,7 @@ public class SprintAdapter : ISprintAdapter
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting current sprint from {project} project.", project);
+            logger.LogError(ex, "Error getting current sprint from {project} project.", project);
             return (AdapterStatus.Unknown, string.Empty);
         }
     }

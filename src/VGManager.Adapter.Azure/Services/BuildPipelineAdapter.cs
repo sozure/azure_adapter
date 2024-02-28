@@ -9,17 +9,8 @@ using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
 
-public class BuildPipelineAdapter : IBuildPipelineAdapter
+public class BuildPipelineAdapter(IHttpClientProvider clientProvider, ILogger<BuildPipelineAdapter> logger) : IBuildPipelineAdapter
 {
-    private readonly IHttpClientProvider _clientProvider;
-    private readonly ILogger _logger;
-
-    public BuildPipelineAdapter(IHttpClientProvider clientProvider, ILogger<BuildPipelineAdapter> logger)
-    {
-        _clientProvider = clientProvider;
-        _logger = logger;
-    }
-
     public async Task<BaseResponse<IEnumerable<BuildDefinitionReference>>> GetBuildPipelinesAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
@@ -31,9 +22,9 @@ public class BuildPipelineAdapter : IBuildPipelineAdapter
             return ResponseProvider.GetResponse(Enumerable.Empty<BuildDefinitionReference>());
         }
 
-        _logger.LogInformation("Request build pipelines from Azure DevOps.");
-        _clientProvider.Setup(payload.Organization, payload.PAT);
-        using var client = await _clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
+        logger.LogInformation("Request build pipelines from Azure DevOps.");
+        clientProvider.Setup(payload.Organization, payload.PAT);
+        using var client = await clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
         var result = await client.GetDefinitionsAsync(payload.Project, cancellationToken: cancellationToken);
         return ResponseProvider.GetResponse(result);
     }
@@ -49,9 +40,9 @@ public class BuildPipelineAdapter : IBuildPipelineAdapter
             return null!;
         }
 
-        _logger.LogInformation("Request build pipelines from Azure DevOps.");
-        _clientProvider.Setup(payload.Organization, payload.PAT);
-        using var client = await _clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
+        logger.LogInformation("Request build pipelines from Azure DevOps.");
+        clientProvider.Setup(payload.Organization, payload.PAT);
+        using var client = await clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
         var result = await client.GetDefinitionAsync(payload.Project, payload.Id, cancellationToken: cancellationToken);
         return ResponseProvider.GetResponse(result);
     }
@@ -68,9 +59,9 @@ public class BuildPipelineAdapter : IBuildPipelineAdapter
             {
                 return ResponseProvider.GetResponse(AdapterStatus.Unknown);
             }
-            _logger.LogInformation("Request build pipelines from Azure DevOps.");
-            _clientProvider.Setup(payload.Organization, payload.PAT);
-            using var client = await _clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
+            logger.LogInformation("Request build pipelines from Azure DevOps.");
+            clientProvider.Setup(payload.Organization, payload.PAT);
+            using var client = await clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
             var pipeline = await client.GetDefinitionAsync(payload.Project, payload.Id, cancellationToken: cancellationToken);
             var build = new Build
             {
@@ -84,7 +75,7 @@ public class BuildPipelineAdapter : IBuildPipelineAdapter
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error running build pipeline {definitionId} for {project} project.", payload?.Id ?? 0, payload?.Project ?? "Unknown");
+            logger.LogError(ex, "Error running build pipeline {definitionId} for {project} project.", payload?.Id ?? 0, payload?.Project ?? "Unknown");
             return ResponseProvider.GetResponse(AdapterStatus.Unknown);
         }
     }
@@ -102,9 +93,9 @@ public class BuildPipelineAdapter : IBuildPipelineAdapter
                 return ResponseProvider.GetResponse(AdapterStatus.Unknown);
             }
 
-            _logger.LogInformation("Request build pipelines from Azure DevOps.");
-            _clientProvider.Setup(payload.Organization, payload.PAT);
-            using var client = await _clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
+            logger.LogInformation("Request build pipelines from Azure DevOps.");
+            clientProvider.Setup(payload.Organization, payload.PAT);
+            using var client = await clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
             var errorCounter = 0;
             foreach (var pipeline in payload.Pipelines)
             {
@@ -129,7 +120,7 @@ public class BuildPipelineAdapter : IBuildPipelineAdapter
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error running build pipelines for {project} project.", payload?.Project ?? "Unknown");
+            logger.LogError(ex, "Error running build pipelines for {project} project.", payload?.Project ?? "Unknown");
             return ResponseProvider.GetResponse(AdapterStatus.Unknown);
         }
     }
