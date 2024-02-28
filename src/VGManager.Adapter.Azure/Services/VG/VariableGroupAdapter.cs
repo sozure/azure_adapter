@@ -14,23 +14,12 @@ using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services.VG;
 
-public class VariableGroupAdapter : IVariableGroupAdapter
+public class VariableGroupAdapter(
+    IHttpClientProvider clientProvider,
+    IVariableFilterService variableFilterService,
+    ILogger<VariableGroupAdapter> logger
+        ) : IVariableGroupAdapter
 {
-    private readonly IHttpClientProvider _clientProvider;
-    private readonly IVariableFilterService _variableFilterService;
-    private readonly ILogger _logger;
-
-    public VariableGroupAdapter(
-        IHttpClientProvider clientProvider,
-        IVariableFilterService variableFilterService,
-        ILogger<VariableGroupAdapter> logger
-        )
-    {
-        _clientProvider = clientProvider;
-        _variableFilterService = variableFilterService;
-        _logger = logger;
-    }
-
     public async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<VariableValue>>>>> GetAllAsync(
         GetVGRequest request,
         bool lightWeightRequest,
@@ -44,25 +33,25 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         catch (VssUnauthorizedException ex)
         {
             var status = AdapterStatus.Unauthorized;
-            _logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
         catch (VssServiceResponseException ex)
         {
             var status = AdapterStatus.ResourceNotFound;
-            _logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
             var status = AdapterStatus.ProjectDoesNotExist;
-            _logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get variables. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyResult<VariableValue>(status));
         }
     }
@@ -93,25 +82,25 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         catch (VssUnauthorizedException ex)
         {
             var status = AdapterStatus.Unauthorized;
-            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyCountResult(status));
         }
         catch (VssServiceResponseException ex)
         {
             var status = AdapterStatus.ResourceNotFound;
-            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyCountResult(status));
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
             var status = AdapterStatus.ProjectDoesNotExist;
-            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyCountResult(status));
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get variable groups. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetEmptyCountResult(status));
         }
     }
@@ -142,44 +131,44 @@ public class VariableGroupAdapter : IVariableGroupAdapter
 
         try
         {
-            _clientProvider.Setup(request.Organization, request.PAT);
-            _logger.LogDebug("Update variable group with name: {variableGroupName} in {project} Azure project.", variableGroupName, project);
-            using var client = await _clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
+            clientProvider.Setup(request.Organization, request.PAT);
+            logger.LogDebug("Update variable group with name: {variableGroupName} in {project} Azure project.", variableGroupName, project);
+            using var client = await clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
             await client!.UpdateVariableGroupAsync(request.VariableGroupId, request.Params, cancellationToken: cancellationToken);
             return ResponseProvider.GetResponse(AdapterStatus.Success);
         }
         catch (VssUnauthorizedException ex)
         {
             var status = AdapterStatus.Unauthorized;
-            _logger.LogError(ex, "Couldn't update variable groups. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't update variable groups. Status: {status}.", status);
             return ResponseProvider.GetResponse(status);
         }
         catch (VssServiceResponseException ex)
         {
             var status = AdapterStatus.ResourceNotFound;
-            _logger.LogError(ex, "Couldn't update variable groups. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't update variable groups. Status: {status}.", status);
             return ResponseProvider.GetResponse(status);
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
             var status = AdapterStatus.ProjectDoesNotExist;
-            _logger.LogError(ex, "Couldn't update variable groups. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't update variable groups. Status: {status}.", status);
             return ResponseProvider.GetResponse(status);
         }
         catch (ArgumentException ex)
         {
-            _logger.LogError(ex, "An item with the same key has already been added to {variableGroupName}.", variableGroupName);
+            logger.LogError(ex, "An item with the same key has already been added to {variableGroupName}.", variableGroupName);
             return ResponseProvider.GetResponse(AdapterStatus.AlreadyContains);
         }
         catch (TeamFoundationServerInvalidRequestException ex)
         {
-            _logger.LogError(ex, "Wasn't added to {variableGroupName} because of TeamFoundationServerInvalidRequestException.", variableGroupName);
+            logger.LogError(ex, "Wasn't added to {variableGroupName} because of TeamFoundationServerInvalidRequestException.", variableGroupName);
             return ResponseProvider.GetResponse(AdapterStatus.Unknown);
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't update variable groups. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't update variable groups. Status: {status}.", status);
             return ResponseProvider.GetResponse(status);
         }
     }
@@ -191,14 +180,14 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         )
     {
         var project = request.Project;
-        _clientProvider.Setup(request.Organization, request.PAT);
-        _logger.LogInformation("Request variable groups from {project} Azure project.", project);
-        using var client = await _clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
+        clientProvider.Setup(request.Organization, request.PAT);
+        logger.LogInformation("Request variable groups from {project} Azure project.", project);
+        using var client = await clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
         var variableGroups = await client.GetVariableGroupsAsync(project, cancellationToken: cancellationToken);
 
         var filteredVariableGroups = request.ContainsSecrets ?
-                    _variableFilterService.Filter(variableGroups, request.VariableGroupFilter) :
-                    _variableFilterService.FilterWithoutSecrets(request.FilterAsRegex, request.VariableGroupFilter, variableGroups);
+                    variableFilterService.Filter(variableGroups, request.VariableGroupFilter) :
+                    variableFilterService.FilterWithoutSecrets(request.FilterAsRegex, request.VariableGroupFilter, variableGroups);
 
         if (request.PotentialVariableGroups is not null)
         {
@@ -227,7 +216,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
             }
             catch (RegexParseException ex)
             {
-                _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", request.KeyFilter);
+                logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", request.KeyFilter);
                 var subResult = CollectSubResult(request.KeyFilter, lightWeightRequest, filteredVariableGroups);
                 result.AddRange(subResult);
             }
@@ -252,7 +241,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         {
             if (lightWeightRequest)
             {
-                var matchedVariables = _variableFilterService.Filter(vg.Variables, regex);
+                var matchedVariables = variableFilterService.Filter(vg.Variables, regex);
                 AddToResult(subResultVar, vg, matchedVariables);
             }
             else
@@ -274,7 +263,7 @@ public class VariableGroupAdapter : IVariableGroupAdapter
         {
             if (lightWeightRequest)
             {
-                var matchedVariables = _variableFilterService.Filter(vg.Variables, keyFilter);
+                var matchedVariables = variableFilterService.Filter(vg.Variables, keyFilter);
                 AddToResult(subResult, vg, matchedVariables);
             }
             else

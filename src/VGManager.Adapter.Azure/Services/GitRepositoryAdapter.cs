@@ -11,11 +11,8 @@ using YamlDotNet.RepresentationModel;
 
 namespace VGManager.Adapter.Azure.Services;
 
-public class GitRepositoryAdapter : IGitRepositoryAdapter
+public class GitRepositoryAdapter(IHttpClientProvider clientProvider, ILogger<GitRepositoryAdapter> logger) : IGitRepositoryAdapter
 {
-    private readonly IHttpClientProvider _clientProvider;
-    private readonly ILogger _logger;
-
     private readonly char[] _notAllowedCharacters = ['{', '}', ' ', '(', ')', '$'];
     private readonly char _startingChar = '$';
     private readonly char _endingChar = '}';
@@ -23,12 +20,6 @@ public class GitRepositoryAdapter : IGitRepositoryAdapter
     private readonly string _secretYamlElement = "stringData";
     private readonly string _variableYamlKind = "ConfigMap";
     private readonly string _variableYamlElement = "data";
-
-    public GitRepositoryAdapter(IHttpClientProvider clientProvider, ILogger<GitRepositoryAdapter> logger)
-    {
-        _clientProvider = clientProvider;
-        _logger = logger;
-    }
 
     public async Task<BaseResponse<IEnumerable<GitRepository>>> GetAllAsync(
         VGManagerAdapterCommand command,
@@ -41,9 +32,9 @@ public class GitRepositoryAdapter : IGitRepositoryAdapter
             return ResponseProvider.GetResponse(Enumerable.Empty<GitRepository>());
         }
 
-        _logger.LogInformation("Request git repositories from {project} azure project.", payload.Project);
-        _clientProvider.Setup(payload.Organization, payload.PAT);
-        using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
+        logger.LogInformation("Request git repositories from {project} azure project.", payload.Project);
+        clientProvider.Setup(payload.Organization, payload.PAT);
+        using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
         var repositories = await client.GetRepositoriesAsync(cancellationToken: cancellationToken);
         var result = repositories.Where(repo => (!repo.IsDisabled ?? false) && repo.ProjectReference.Name == payload.Project).ToList();
         return ResponseProvider.GetResponse(result);
@@ -63,13 +54,13 @@ public class GitRepositoryAdapter : IGitRepositoryAdapter
         var project = payload.Project;
         var repositoryId = payload.RepositoryId;
 
-        _logger.LogInformation(
+        logger.LogInformation(
             "Requesting configurations from {project} azure project, {repositoryId} git repository.",
             project,
             repositoryId
             );
-        _clientProvider.Setup(payload.Organization, payload.PAT);
-        using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
+        clientProvider.Setup(payload.Organization, payload.PAT);
+        using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
         var gitVersionDescriptor = new GitVersionDescriptor
         {
             VersionType = GitVersionType.Branch,

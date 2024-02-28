@@ -14,15 +14,9 @@ using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
-public class ProjectAdapter : IProjectAdapter
+public class ProjectAdapter(ILogger<ProjectAdapter> logger) : IProjectAdapter
 {
     private ProjectHttpClient? _projectHttpClient;
-    private readonly ILogger _logger;
-
-    public ProjectAdapter(ILogger<ProjectAdapter> logger)
-    {
-        _logger = logger;
-    }
 
     public async Task<BaseResponse<AdapterResponseModel<IEnumerable<ProjectRequest>>>> GetProjectsAsync(
         VGManagerAdapterCommand command,
@@ -42,7 +36,7 @@ public class ProjectAdapter : IProjectAdapter
             }
 
             var baseUrl = $"https://dev.azure.com/{payload.Organization}";
-            _logger.LogInformation("Get projects from {baseUrl}.", baseUrl);
+            logger.LogInformation("Get projects from {baseUrl}.", baseUrl);
             await GetConnectionAsync(baseUrl, payload.PAT);
             var teamProjectReferences = await _projectHttpClient!.GetProjects();
             _projectHttpClient.Dispose();
@@ -64,19 +58,19 @@ public class ProjectAdapter : IProjectAdapter
         catch (VssUnauthorizedException ex)
         {
             var status = AdapterStatus.Unauthorized;
-            _logger.LogError(ex, "Couldn't get projects. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get projects. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetResult(status));
         }
         catch (VssServiceResponseException ex)
         {
             var status = AdapterStatus.ResourceNotFound;
-            _logger.LogError(ex, "Couldn't get projects. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get projects. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetResult(status));
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't get projects. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get projects. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetResult(status));
         }
     }
@@ -116,7 +110,7 @@ public class ProjectAdapter : IProjectAdapter
         }
         else
         {
-            _logger.LogError("Error: {statusCode} - {reasonPhrase}", response.StatusCode, response.ReasonPhrase);
+            logger.LogError("Error: {statusCode} - {reasonPhrase}", response.StatusCode, response.ReasonPhrase);
         }
         return result;
     }
@@ -133,7 +127,7 @@ public class ProjectAdapter : IProjectAdapter
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Couldn't establish connection.");
+            logger.LogError(ex, "Couldn't establish connection.");
             throw;
         }
     }

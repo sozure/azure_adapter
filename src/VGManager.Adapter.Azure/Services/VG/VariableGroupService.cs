@@ -11,23 +11,12 @@ using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services.VG;
 
-public class VariableGroupService: IVariableGroupService
+public class VariableGroupService(
+    IVariableGroupAdapter variableGroupAdapter,
+    IVariableFilterService variableFilterService,
+    ILogger<VariableGroupService> logger
+        ) : IVariableGroupService
 {
-    private readonly IVariableGroupAdapter _variableGroupAdapter;
-    private readonly IVariableFilterService _variableFilterService;
-    private readonly ILogger _logger;
-
-    public VariableGroupService(
-        IVariableGroupAdapter variableGroupAdapter,
-        IVariableFilterService variableFilterService,
-        ILogger<VariableGroupService> logger
-        )
-    {
-        _variableGroupAdapter = variableGroupAdapter;
-        _variableFilterService = variableFilterService;
-        _logger = logger;
-    }
-
     public async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>>> GetAllAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
@@ -43,7 +32,7 @@ public class VariableGroupService: IVariableGroupService
                     Data = new AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>(),
                 };
             }
-            var result = await _variableGroupAdapter.GetAllAsync(payload, true, cancellationToken);
+            var result = await variableGroupAdapter.GetAllAsync(payload, true, cancellationToken);
 
             return new BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>>
             {
@@ -138,7 +127,7 @@ public class VariableGroupService: IVariableGroupService
                     }
                     catch (RegexParseException ex)
                     {
-                        _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", valueFilter);
+                        logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", valueFilter);
                     }
                 }
 
@@ -203,7 +192,7 @@ public class VariableGroupService: IVariableGroupService
             {
                 return GetErrorResult2();
             }
-            return await _variableGroupAdapter.GetNumberOfFoundVGsAsync(payload, cancellationToken);
+            return await variableGroupAdapter.GetNumberOfFoundVGsAsync(payload, cancellationToken);
         } catch (Exception)
         {
             return GetErrorResult2();
@@ -248,7 +237,7 @@ public class VariableGroupService: IVariableGroupService
     private bool DeleteVariables(SimplifiedVGResponse<VariableValue> filteredVariableGroup, string keyFilter, string? valueCondition)
     {
         var deleteIsNeeded = false;
-        var filteredVariables = _variableFilterService.Filter(filteredVariableGroup.Variables, keyFilter);
+        var filteredVariables = variableFilterService.Filter(filteredVariableGroup.Variables, keyFilter);
         foreach (var filteredVariable in filteredVariables)
         {
             var variableValue = filteredVariable.Value.Value;
@@ -296,7 +285,7 @@ public class VariableGroupService: IVariableGroupService
 
             catch (ArgumentException ex)
             {
-                _logger.LogDebug(
+                logger.LogDebug(
                     ex,
                     "Key has been added previously. Not a breaking error. Variable group: {variableGroupName}, Key: {key}",
                     filteredVariableGroup.Name,
@@ -307,7 +296,7 @@ public class VariableGroupService: IVariableGroupService
 
             catch (Exception ex)
             {
-                _logger.LogError(
+                logger.LogError(
                     ex,
                     "Something went wrong during variable addition. Variable group: {variableGroupName}, Key: {key}",
                     filteredVariableGroup.Name,
@@ -357,7 +346,7 @@ public class VariableGroupService: IVariableGroupService
             }
             catch (RegexParseException ex)
             {
-                _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", keyFilter);
+                logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", keyFilter);
                 filteredVariableGroups = vgEntity.Data.Select(vg => vg)
                 .Where(vg => vg.Variables.Keys.ToList().FindAll(key => keyFilter.ToLower() == key.ToLower()).Count == 0);
             }
@@ -396,7 +385,7 @@ public class VariableGroupService: IVariableGroupService
                 if (updateStatus == AdapterStatus.Success)
                 {
                     updateCounter1++;
-                    _logger.LogDebug("{variableGroupName} updated.", variableGroupName);
+                    logger.LogDebug("{variableGroupName} updated.", variableGroupName);
                 }
             }
         }
@@ -418,7 +407,7 @@ public class VariableGroupService: IVariableGroupService
             VariableGroupId = filteredVariableGroup.Id,
             Params = variableGroupParameters
         };
-        var updateStatus = await _variableGroupAdapter.UpdateAsync(request, cancellationToken);
+        var updateStatus = await variableGroupAdapter.UpdateAsync(request, cancellationToken);
         return updateStatus.Data;
     }
 
@@ -429,7 +418,7 @@ public class VariableGroupService: IVariableGroupService
         SimplifiedVGResponse<VariableValue> filteredVariableGroup
         )
     {
-        var filteredVariables = _variableFilterService.Filter(filteredVariableGroup.Variables, keyFilter);
+        var filteredVariables = variableFilterService.Filter(filteredVariableGroup.Variables, keyFilter);
         var updateIsNeeded = false;
 
         foreach (var filteredVariable in filteredVariables)
@@ -490,7 +479,7 @@ public class VariableGroupService: IVariableGroupService
             KeyFilter = variableGroupModel.KeyFilter,
         };
 
-        return await _variableGroupAdapter.GetAllAsync(request, false, cancellationToken);
+        return await variableGroupAdapter.GetAllAsync(request, false, cancellationToken);
     }
 
     private static BaseResponse<AdapterStatus> GetResult(AdapterStatus status)

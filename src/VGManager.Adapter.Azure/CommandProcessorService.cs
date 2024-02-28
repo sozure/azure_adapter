@@ -9,50 +9,21 @@ using VGManager.Communication.Models;
 
 namespace VGManager.Adapter.Azure;
 
-public class CommandProcessorService : ICommandProcessorService
+public class CommandProcessorService(
+    IKafkaProducerService<VGManagerAdapterCommandResponse> kafkaProducerService,
+    IGitFileAdapter gitFileAdapter,
+    IBuildPipelineAdapter buildPipelineAdapter,
+    IGitRepositoryAdapter gitRepositoryAdapter,
+    IGitVersionAdapter gitVersionAdapter,
+    IKeyVaultAdapter keyVaultAdapter,
+    IProfileAdapter profileAdapter,
+    IProjectAdapter projectAdapter,
+    IReleasePipelineAdapter releasePipelineAdapter,
+    IVariableGroupService variableGroupService,
+    IMapper mapper,
+    ILogger<CommandProcessorService> logger
+    ) : ICommandProcessorService
 {
-    private readonly IKafkaProducerService<VGManagerAdapterCommandResponse> _kafkaProducerService;
-    private readonly IGitFileAdapter _gitFileAdapter;
-    private readonly IBuildPipelineAdapter _buildPipelineAdapter;
-    private readonly IGitRepositoryAdapter _gitRepositoryAdapter;
-    private readonly IGitVersionAdapter _gitVersionAdapter;
-    private readonly IKeyVaultAdapter _keyVaultAdapter;
-    private readonly IProfileAdapter _profileAdapter;
-    private readonly IProjectAdapter _projectAdapter;
-    private readonly IReleasePipelineAdapter _releasePipelineAdapter;
-    private readonly IVariableGroupService _variableGroupService;
-    private readonly IMapper _mapper;
-    private readonly ILogger _logger;
-
-    public CommandProcessorService(
-        IKafkaProducerService<VGManagerAdapterCommandResponse> kafkaProducerService,
-        IGitFileAdapter gitFileAdapter,
-        IBuildPipelineAdapter buildPipelineAdapter,
-        IGitRepositoryAdapter gitRepositoryAdapter,
-        IGitVersionAdapter gitVersionAdapter,
-        IKeyVaultAdapter keyVaultAdapter,
-        IProfileAdapter profileAdapter,
-        IProjectAdapter projectAdapter,
-        IReleasePipelineAdapter releasePipelineAdapter,
-        IVariableGroupService variableGroupService,
-        IMapper mapper,
-        ILogger<CommandProcessorService> logger
-    )
-    {
-        _kafkaProducerService = kafkaProducerService;
-        _gitFileAdapter = gitFileAdapter;
-        _buildPipelineAdapter = buildPipelineAdapter;
-        _gitRepositoryAdapter = gitRepositoryAdapter;
-        _gitVersionAdapter = gitVersionAdapter;
-        _keyVaultAdapter = keyVaultAdapter;
-        _profileAdapter = profileAdapter;
-        _projectAdapter = projectAdapter;
-        _releasePipelineAdapter = releasePipelineAdapter;
-        _variableGroupService = variableGroupService;
-        _mapper = mapper;
-        _logger = logger;
-    }
-
     public async Task ProcessCommandAsync(CommandMessageBase commandMessage, CancellationToken cancellationToken = default)
     {
         VGManagerAdapterCommandResponse message;
@@ -61,118 +32,118 @@ public class CommandProcessorService : ICommandProcessorService
         try
         {
             object? result = null;
-            message = _mapper.Map<VGManagerAdapterCommandResponse>(commandMessage);
+            message = mapper.Map<VGManagerAdapterCommandResponse>(commandMessage);
             var vgManagerAdapterCommandMessage = (VGManagerAdapterCommand)commandMessage;
 
             destination = vgManagerAdapterCommandMessage.Destination;
 
             result = commandMessage.CommandType switch
             {
-                CommandTypes.CreateTagRequest => await _gitVersionAdapter.CreateTagAsync(
+                CommandTypes.CreateTagRequest => await gitVersionAdapter.CreateTagAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetBuildPipelinesRequest => await _buildPipelineAdapter.GetBuildPipelinesAsync(
+                CommandTypes.GetBuildPipelinesRequest => await buildPipelineAdapter.GetBuildPipelinesAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.RunBuildPipelinesRequest => await _buildPipelineAdapter.RunBuildPipelinesAsync(
+                CommandTypes.RunBuildPipelinesRequest => await buildPipelineAdapter.RunBuildPipelinesAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetBuildPipelineRequest => await _buildPipelineAdapter.GetBuildPipelineAsync(
+                CommandTypes.GetBuildPipelineRequest => await buildPipelineAdapter.GetBuildPipelineAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.RunBuildPipelineRequest => await _buildPipelineAdapter.RunBuildPipelineAsync(
+                CommandTypes.RunBuildPipelineRequest => await buildPipelineAdapter.RunBuildPipelineAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetFilePathRequest => await _gitFileAdapter.GetFilePathAsync(
+                CommandTypes.GetFilePathRequest => await gitFileAdapter.GetFilePathAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetConfigFilesRequest => await _gitFileAdapter.GetConfigFilesAsync(
+                CommandTypes.GetConfigFilesRequest => await gitFileAdapter.GetConfigFilesAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetAllRepositoriesRequest => await _gitRepositoryAdapter.GetAllAsync(
+                CommandTypes.GetAllRepositoriesRequest => await gitRepositoryAdapter.GetAllAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetVariablesFromConfigRequest => await _gitRepositoryAdapter.GetVariablesFromConfigAsync(
+                CommandTypes.GetVariablesFromConfigRequest => await gitRepositoryAdapter.GetVariablesFromConfigAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetBranchesRequest => await _gitVersionAdapter.GetBranchesAsync(
+                CommandTypes.GetBranchesRequest => await gitVersionAdapter.GetBranchesAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetTagsRequest => await _gitVersionAdapter.GetTagsAsync(
+                CommandTypes.GetTagsRequest => await gitVersionAdapter.GetTagsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetProfileRequest => await _profileAdapter.GetProfileAsync(
+                CommandTypes.GetProfileRequest => await profileAdapter.GetProfileAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetEnvironmentsRequest => await _releasePipelineAdapter.GetEnvironmentsAsync(
+                CommandTypes.GetEnvironmentsRequest => await releasePipelineAdapter.GetEnvironmentsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetVariableGroupsRequest => await _releasePipelineAdapter.GetVariableGroupsAsync(
+                CommandTypes.GetVariableGroupsRequest => await releasePipelineAdapter.GetVariableGroupsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetProjectsRequest => await _projectAdapter.GetProjectsAsync(
+                CommandTypes.GetProjectsRequest => await projectAdapter.GetProjectsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetAllVGRequest => await _variableGroupService.GetAllAsync(
+                CommandTypes.GetAllVGRequest => await variableGroupService.GetAllAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetNumberOfFoundVGsRequest => await _variableGroupService.GetNumberOfFoundVGsAsync(
+                CommandTypes.GetNumberOfFoundVGsRequest => await variableGroupService.GetNumberOfFoundVGsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.UpdateVGRequest => await _variableGroupService.UpdateAsync(
+                CommandTypes.UpdateVGRequest => await variableGroupService.UpdateAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.AddVGRequest => await _variableGroupService.AddVariablesAsync(
+                CommandTypes.AddVGRequest => await variableGroupService.AddVariablesAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
-                CommandTypes.DeleteVGRequest => await _variableGroupService.DeleteVariablesAsync(
+                CommandTypes.DeleteVGRequest => await variableGroupService.DeleteVariablesAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
-                CommandTypes.GetKeyVaultsRequest => await _keyVaultAdapter.GetKeyVaultsAsync(
+                CommandTypes.GetKeyVaultsRequest => await keyVaultAdapter.GetKeyVaultsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
-                CommandTypes.GetSecretsRequest => await _keyVaultAdapter.GetSecretsAsync(
+                CommandTypes.GetSecretsRequest => await keyVaultAdapter.GetSecretsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
-                CommandTypes.DeleteSecretRequest => await _keyVaultAdapter.DeleteSecretAsync(
+                CommandTypes.DeleteSecretRequest => await keyVaultAdapter.DeleteSecretAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
-                CommandTypes.AddKeyVaultSecretRequest => await _keyVaultAdapter.AddKeyVaultSecretAsync(
+                CommandTypes.AddKeyVaultSecretRequest => await keyVaultAdapter.AddKeyVaultSecretAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
-                CommandTypes.RecoverSecretRequest => await _keyVaultAdapter.RecoverSecretAsync(
+                CommandTypes.RecoverSecretRequest => await keyVaultAdapter.RecoverSecretAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
-                CommandTypes.GetDeletedSecretsRequest => _keyVaultAdapter.GetDeletedSecrets(
+                CommandTypes.GetDeletedSecretsRequest => keyVaultAdapter.GetDeletedSecrets(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
-                CommandTypes.GetAllSecretsRequest => await _keyVaultAdapter.GetAllAsync(
+                CommandTypes.GetAllSecretsRequest => await keyVaultAdapter.GetAllAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
@@ -186,7 +157,7 @@ public class CommandProcessorService : ICommandProcessorService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Could not process command for {CommandType}", commandMessage.CommandType);
+            logger.LogError(ex, "Could not process command for {CommandType}", commandMessage.CommandType);
 
             message = new VGManagerAdapterCommandResponse
             {
@@ -206,11 +177,11 @@ public class CommandProcessorService : ICommandProcessorService
     {
         if (topic is not null)
         {
-            await _kafkaProducerService.ProduceAsync((VGManagerAdapterCommandResponse)commandResponseMessage, topic, cancellationToken);
+            await kafkaProducerService.ProduceAsync((VGManagerAdapterCommandResponse)commandResponseMessage, topic, cancellationToken);
         }
         else
         {
-            _logger.LogError("Destination topic is null");
+            logger.LogError("Destination topic is null");
         }
     }
 }

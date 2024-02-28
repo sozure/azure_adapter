@@ -14,20 +14,11 @@ using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
 
-public class KeyVaultAdapter : IKeyVaultAdapter
+public class KeyVaultAdapter(
+    IHttpClientProvider clientProvider,
+    ILogger<KeyVaultAdapter> logger
+        ) : IKeyVaultAdapter
 {
-    private readonly IHttpClientProvider _clientProvider;
-    private readonly ILogger _logger;
-
-    public KeyVaultAdapter(
-        IHttpClientProvider clientProvider,
-        ILogger<KeyVaultAdapter> logger
-        )
-    {
-        _clientProvider = clientProvider;
-        _logger = logger;
-    }
-
     public async Task<BaseResponse<Dictionary<string, object>>> GetKeyVaultsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
@@ -89,21 +80,21 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var clientId = payload.ClientId;
             var clientSecret = payload.ClientSecret;
 
-            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
-            var secretClient = _clientProvider.GetSecretClient();
+            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = clientProvider.GetSecretClient();
             result = await secretClient.GetSecretAsync(name, cancellationToken: cancellationToken);
             return ResponseProvider.GetResponse(GetSecretResult(result));
         }
         catch (RequestFailedException ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't get secret. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get secret. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetSecretResult(status));
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't get secret. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get secret. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetSecretResult(status));
         }
     }
@@ -127,16 +118,16 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var keyVaultName = payload.KeyVaultName;
             var name = payload.AdditionalData;
 
-            _logger.LogDebug("Delete secret {name} in {keyVault}.", name, keyVaultName);
-            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
-            var secretClient = _clientProvider.GetSecretClient();
+            logger.LogDebug("Delete secret {name} in {keyVault}.", name, keyVaultName);
+            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = clientProvider.GetSecretClient();
             await secretClient.StartDeleteSecretAsync(name, cancellationToken);
             return ResponseProvider.GetResponse(AdapterStatus.Success);
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't delete secret. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't delete secret. Status: {status}.", status);
             return ResponseProvider.GetResponse(status);
         }
     }
@@ -163,9 +154,9 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var clientSecret = payload.ClientSecret;
             var keyVaultName = payload.KeyVaultName;
 
-            _logger.LogInformation("Get secrets from {keyVault}.", keyVaultName);
-            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
-            var secretClient = _clientProvider.GetSecretClient();
+            logger.LogInformation("Get secrets from {keyVault}.", keyVaultName);
+            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = clientProvider.GetSecretClient();
             var secretProperties = secretClient.GetPropertiesOfSecrets(cancellationToken).ToList();
             var results = await Task.WhenAll(secretProperties.Select(p => GetSecretAsync(
                 command,
@@ -202,7 +193,7 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't get secrets. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get secrets. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetSecretsResult(status));
         }
     }
@@ -226,23 +217,23 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var keyVaultName = payload.KeyVaultName;
             var parameters = payload.AdditionalData;
 
-            _logger.LogInformation("Get deleted secrets from {keyVault}.", keyVaultName);
-            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
-            var secretClient = _clientProvider.GetSecretClient();
+            logger.LogInformation("Get deleted secrets from {keyVault}.", keyVaultName);
+            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = clientProvider.GetSecretClient();
             var secretName = parameters["secretName"];
             var deletedSecrets = secretClient.GetDeletedSecrets(cancellationToken).ToList();
             var didWeRecover = deletedSecrets.Exists(deletedSecret => deletedSecret.Name.Equals(secretName));
 
             if (!didWeRecover)
             {
-                _logger.LogDebug("Set secret: {secretName} in {keyVault}.", secretName, keyVaultName);
+                logger.LogDebug("Set secret: {secretName} in {keyVault}.", secretName, keyVaultName);
                 var secretValue = parameters["secretValue"];
                 var newSecret = new KeyVaultSecret(secretName, secretValue);
                 await secretClient.SetSecretAsync(newSecret, cancellationToken);
             }
             else
             {
-                _logger.LogDebug("Recover deleted secret: {secretName} in {keyVault}.", secretName, keyVaultName);
+                logger.LogDebug("Recover deleted secret: {secretName} in {keyVault}.", secretName, keyVaultName);
                 await secretClient.StartRecoverDeletedSecretAsync(secretName, cancellationToken);
             }
 
@@ -251,7 +242,7 @@ public class KeyVaultAdapter : IKeyVaultAdapter
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't add secret. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't add secret. Status: {status}.", status);
             return ResponseProvider.GetResponse(status);
         }
     }
@@ -275,16 +266,16 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var keyVaultName = payload.KeyVaultName;
             var name = payload.AdditionalData;
 
-            _logger.LogDebug("Recover deleted secret: {secretName} in {keyVault}.", name, keyVaultName);
-            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
-            var secretClient = _clientProvider.GetSecretClient();
+            logger.LogDebug("Recover deleted secret: {secretName} in {keyVault}.", name, keyVaultName);
+            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = clientProvider.GetSecretClient();
             await secretClient.StartRecoverDeletedSecretAsync(name, cancellationToken);
             return ResponseProvider.GetResponse(AdapterStatus.Success);
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't recover secret. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't recover secret. Status: {status}.", status);
             return ResponseProvider.GetResponse(status);
         }
     }
@@ -311,16 +302,16 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var clientSecret = payload.ClientSecret;
             var keyVaultName = payload.KeyVaultName;
 
-            _logger.LogInformation("Get deleted secrets from {keyVault}.", keyVaultName);
-            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
-            var secretClient = _clientProvider.GetSecretClient();
+            logger.LogInformation("Get deleted secrets from {keyVault}.", keyVaultName);
+            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = clientProvider.GetSecretClient();
             var deletedSecrets = secretClient.GetDeletedSecrets(cancellationToken).ToList();
             return ResponseProvider.GetResponse(GetDeletedSecretsResult(deletedSecrets));
         }
         catch (Exception ex)
         {
             var status = AdapterStatus.Unknown;
-            _logger.LogError(ex, "Couldn't get deleted secrets. Status: {status}.", status);
+            logger.LogError(ex, "Couldn't get deleted secrets. Status: {status}.", status);
             return ResponseProvider.GetResponse(GetDeletedSecretsResult(status));
         }
     }
@@ -347,8 +338,8 @@ public class KeyVaultAdapter : IKeyVaultAdapter
             var clientSecret = payload.ClientSecret;
             var keyVaultName = payload.KeyVaultName;
 
-            _clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
-            var secretClient = _clientProvider.GetSecretClient();
+            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = clientProvider.GetSecretClient();
             var secretProperties = secretClient.GetPropertiesOfSecrets(cancellationToken).ToList();
             var results = new List<KeyVaultSecret>();
 

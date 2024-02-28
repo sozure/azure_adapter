@@ -10,23 +10,12 @@ using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
 
-public class GitVersionAdapter : IGitVersionAdapter
+public class GitVersionAdapter(
+    ISprintAdapter sprintAdapter,
+    IHttpClientProvider clientProvider,
+    ILogger<GitVersionAdapter> logger
+        ) : IGitVersionAdapter
 {
-    private readonly ISprintAdapter _sprintAdapter;
-    private readonly IHttpClientProvider _clientProvider;
-    private readonly ILogger _logger;
-
-    public GitVersionAdapter(
-        ISprintAdapter sprintAdapter,
-        IHttpClientProvider clientProvider,
-        ILogger<GitVersionAdapter> logger
-        )
-    {
-        _sprintAdapter = sprintAdapter;
-        _clientProvider = clientProvider;
-        _logger = logger;
-    }
-
     public async Task<BaseResponse<Dictionary<string, object>>> GetBranchesAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
@@ -40,21 +29,21 @@ public class GitVersionAdapter : IGitVersionAdapter
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
             }
 
-            _clientProvider.Setup(payload.Organization, payload.PAT);
-            _logger.LogInformation("Request git branches from {project} git project.", payload.RepositoryId);
-            using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
+            clientProvider.Setup(payload.Organization, payload.PAT);
+            logger.LogInformation("Request git branches from {project} git project.", payload.RepositoryId);
+            using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
             var branches = await client.GetBranchesAsync(payload.RepositoryId, cancellationToken: cancellationToken);
             var result = (AdapterStatus.Success, branches.Select(branch => branch.Name).ToList());
             return ResponseProvider.GetResponse(result);
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId ?? "Unknown");
+            logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId ?? "Unknown");
             return ResponseProvider.GetResponse((AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>()));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting git branches from {project} git project.", payload?.RepositoryId ?? "Unknown");
+            logger.LogError(ex, "Error getting git branches from {project} git project.", payload?.RepositoryId ?? "Unknown");
             return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
         }
     }
@@ -72,21 +61,21 @@ public class GitVersionAdapter : IGitVersionAdapter
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
             }
 
-            _clientProvider.Setup(payload.Organization, payload.PAT);
-            _logger.LogInformation("Request git tags from {project} git project.", payload.RepositoryId);
-            using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
+            clientProvider.Setup(payload.Organization, payload.PAT);
+            logger.LogInformation("Request git tags from {project} git project.", payload.RepositoryId);
+            using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
             var tags = await client.GetTagRefsAsync(payload.RepositoryId);
 
             return ResponseProvider.GetResponse((AdapterStatus.Success, tags.Select(tag => tag.Name).ToList()));
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId);
+            logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId);
             return ResponseProvider.GetResponse((AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>()));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting git tags from {project} git project.", payload?.RepositoryId);
+            logger.LogError(ex, "Error getting git tags from {project} git project.", payload?.RepositoryId);
             return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
         }
     }
@@ -108,11 +97,11 @@ public class GitVersionAdapter : IGitVersionAdapter
             var project = payload.Project;
             var tag = payload.TagName;
             var description = payload.Description;
-            _clientProvider.Setup(payload.Organization, payload.PAT);
-            _logger.LogInformation("Request git tags from {project} git project.", repositoryId);
-            using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
+            clientProvider.Setup(payload.Organization, payload.PAT);
+            logger.LogInformation("Request git tags from {project} git project.", repositoryId);
+            using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
             
-            var sprint = await _sprintAdapter.GetCurrentSprintAsync(payload.Project, cancellationToken);
+            var sprint = await sprintAdapter.GetCurrentSprintAsync(payload.Project, cancellationToken);
             var branch = await client.GetBranchAsync(
                 project,
                 repositoryId,
@@ -141,12 +130,12 @@ public class GitVersionAdapter : IGitVersionAdapter
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId);
+            logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId);
             return ResponseProvider.GetResponse((AdapterStatus.Unknown, string.Empty));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting git tags from {project} git project.", payload?.RepositoryId);
+            logger.LogError(ex, "Error getting git tags from {project} git project.", payload?.RepositoryId);
             return ResponseProvider.GetResponse((AdapterStatus.Unknown, string.Empty));
         }
     }

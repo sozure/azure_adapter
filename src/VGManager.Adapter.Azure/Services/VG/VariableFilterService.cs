@@ -5,15 +5,9 @@ using VGManager.Adapter.Azure.Services.Interfaces;
 
 namespace VGManager.Adapter.Azure.Services.VG;
 
-public class VariableFilterService : IVariableFilterService
+public class VariableFilterService(ILogger<VariableFilterService> logger) : IVariableFilterService
 {
-    private readonly ILogger _logger;
     private readonly string SecretVGType = "AzureKeyVault";
-
-    public VariableFilterService(ILogger<VariableFilterService> logger)
-    {
-        _logger = logger;
-    }
 
     public IEnumerable<VariableGroup> Filter(IEnumerable<VariableGroup> variableGroups, string filter)
     {
@@ -24,7 +18,7 @@ public class VariableFilterService : IVariableFilterService
         }
         catch (RegexParseException ex)
         {
-            _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", filter);
+            logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", filter);
             return variableGroups.Where(vg => filter.ToLower() == vg.Name.ToLower()).ToList();
         }
         try
@@ -33,7 +27,7 @@ public class VariableFilterService : IVariableFilterService
         }
         catch (RegexMatchTimeoutException ex)
         {
-            _logger.LogError(ex, "Regex match timeout. Value: {value}.", filter);
+            logger.LogError(ex, "Regex match timeout. Value: {value}.", filter);
             return Enumerable.Empty<VariableGroup>();
         }
     }
@@ -59,7 +53,7 @@ public class VariableFilterService : IVariableFilterService
             }
             catch (RegexParseException ex)
             {
-                _logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", filter);
+                logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", filter);
                 return variableGroups.Where(vg => filter.ToLower() == vg.Name.ToLower() && vg.Type != SecretVGType).ToList();
             }
             return variableGroups.Where(vg => regex.IsMatch(vg.Name.ToLower()) && vg.Type != SecretVGType).ToList();

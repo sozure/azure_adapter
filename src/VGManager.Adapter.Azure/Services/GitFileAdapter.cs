@@ -10,18 +10,9 @@ using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
 
-public class GitFileAdapter : IGitFileAdapter
+public class GitFileAdapter(IHttpClientProvider clientProvider, ILogger<GitFileAdapter> logger) : IGitFileAdapter
 {
-    private readonly IHttpClientProvider _clientProvider;
-    private readonly ILogger _logger;
-
     private readonly string[] Extensions = { "yaml" };
-
-    public GitFileAdapter(IHttpClientProvider clientProvider, ILogger<GitFileAdapter> logger)
-    {
-        _clientProvider = clientProvider;
-        _logger = logger;
-    }
 
     public async Task<BaseResponse<Dictionary<string, object>>> GetFilePathAsync(
         VGManagerAdapterCommand command,
@@ -36,19 +27,19 @@ public class GitFileAdapter : IGitFileAdapter
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
             }
 
-            _logger.LogInformation("Request file path from {project} git project.", payload.RepositoryId);
-            _clientProvider.Setup(payload.Organization, payload.PAT);
+            logger.LogInformation("Request file path from {project} git project.", payload.RepositoryId);
+            clientProvider.Setup(payload.Organization, payload.PAT);
             var result = await GetFilePathAsync(payload.Branch, payload.RepositoryId, payload.AdditionalInformation ?? string.Empty, cancellationToken);
             return ResponseProvider.GetResponse(result);
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId ?? "Unknown");
+            logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId ?? "Unknown");
             return ResponseProvider.GetResponse((AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>()));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting file path from {project} git project.", payload?.RepositoryId ?? "Unknown");
+            logger.LogError(ex, "Error getting file path from {project} git project.", payload?.RepositoryId ?? "Unknown");
             return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
         }
     }
@@ -66,14 +57,14 @@ public class GitFileAdapter : IGitFileAdapter
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
             }
 
-            _logger.LogInformation("Get config files from {project} git project.", payload.RepositoryId);
-            _clientProvider.Setup(payload.Organization, payload.PAT);
+            logger.LogInformation("Get config files from {project} git project.", payload.RepositoryId);
+            clientProvider.Setup(payload.Organization, payload.PAT);
             var result = await GetConfigFilesAsync(payload.Branch, payload.RepositoryId, payload.AdditionalInformation ?? string.Empty, cancellationToken);
             return ResponseProvider.GetResponse(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting config files from {project} git project.", payload?.RepositoryId ?? "Unknown");
+            logger.LogError(ex, "Error getting config files from {project} git project.", payload?.RepositoryId ?? "Unknown");
             return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
         }
     }
@@ -87,7 +78,7 @@ public class GitFileAdapter : IGitFileAdapter
     {
         try
         {
-            using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
+            using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
             var request = new GitItemRequestData()
             {
                 ItemDescriptors = new GitItemDescriptor[]
@@ -115,7 +106,7 @@ public class GitFileAdapter : IGitFileAdapter
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting file path from {project} git project.", repositoryId);
+            logger.LogError(ex, "Error getting file path from {project} git project.", repositoryId);
             return (AdapterStatus.Unknown, Enumerable.Empty<string>());
         }
     }
@@ -129,7 +120,7 @@ public class GitFileAdapter : IGitFileAdapter
     {
         try
         {
-            using var client = await _clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
+            using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
             var request = new GitItemRequestData()
             {
                 ItemDescriptors = new GitItemDescriptor[]
@@ -161,7 +152,7 @@ public class GitFileAdapter : IGitFileAdapter
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting file path from {project} git project.", repositoryId);
+            logger.LogError(ex, "Error getting file path from {project} git project.", repositoryId);
             return (AdapterStatus.Unknown, Enumerable.Empty<string>());
         }
     }

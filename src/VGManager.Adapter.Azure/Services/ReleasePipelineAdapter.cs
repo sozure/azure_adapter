@@ -14,19 +14,10 @@ using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
 
-public class ReleasePipelineAdapter : IReleasePipelineAdapter
+public class ReleasePipelineAdapter(IHttpClientProvider clientProvider, ILogger<ReleasePipelineAdapter> logger) : IReleasePipelineAdapter
 {
-    private readonly IHttpClientProvider _clientProvider;
-    private readonly ILogger _logger;
-
     private readonly string[] Replacable = { "Deploy to ", "Transfer to " };
     private readonly string[] ExcludableEnvironments = { "OTP container registry" };
-
-    public ReleasePipelineAdapter(IHttpClientProvider clientProvider, ILogger<ReleasePipelineAdapter> logger)
-    {
-        _clientProvider = clientProvider;
-        _logger = logger;
-    }
 
     public async Task<BaseResponse<Dictionary<string, object>>> GetEnvironmentsAsync(
         VGManagerAdapterCommand command,
@@ -44,7 +35,7 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
             var project = payload.Project;
             var repositoryName = payload.RepositoryName;
 
-            _logger.LogInformation("Request environments for {repository} git repository from {project} azure project.", repositoryName, project);
+            logger.LogInformation("Request environments for {repository} git repository from {project} azure project.", repositoryName, project);
             var definition = await GetReleaseDefinitionAsync(payload.Organization, payload.PAT, project, repositoryName, payload.ConfigFile, cancellationToken);
             var rawResult = definition?.Environments.Select(env => env.Name).ToList() ?? Enumerable.Empty<string>();
             var result = new List<string>();
@@ -66,12 +57,12 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} azure project is not found.", payload?.Project ?? "Unknown");
+            logger.LogError(ex, "{project} azure project is not found.", payload?.Project ?? "Unknown");
             return ResponseProvider.GetResponse((AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>()));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting git branches from {project} azure project.", payload?.Project ?? "Unknown");
+            logger.LogError(ex, "Error getting git branches from {project} azure project.", payload?.Project ?? "Unknown");
             return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
         }
     }
@@ -92,7 +83,7 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
             var project = payload.Project;
             var repositoryName = payload.RepositoryName;
 
-            _logger.LogInformation(
+            logger.LogInformation(
                 "Request corresponding variable groups for {repository} repository, {project} azure project.",
                 repositoryName,
                 project
@@ -110,12 +101,12 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
-            _logger.LogError(ex, "{project} azure project is not found.", payload?.Project ?? "Unknown");
+            logger.LogError(ex, "{project} azure project is not found.", payload?.Project ?? "Unknown");
             return ResponseProvider.GetResponse((AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<(string, string)>()));
         }
         catch (Exception ex)
         {
-            _logger.LogError(
+            logger.LogError(
                 ex,
                 "Error getting corresponding variable groups for {repository} repository, {project} azure project.",
                 payload?.RepositoryName ?? "Unknown",
@@ -131,7 +122,7 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
         CancellationToken cancellationToken
         )
     {
-        using var client = await _clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
+        using var client = await clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
         var variableGroupNames = new List<(string, string)>();
 
         foreach (var env in definition.Environments.Where(env => !ExcludableEnvironments.Any(env.Name.Contains)))
@@ -155,8 +146,8 @@ public class ReleasePipelineAdapter : IReleasePipelineAdapter
         CancellationToken cancellationToken
         )
     {
-        _clientProvider.Setup(organization, pat);
-        using var client = await _clientProvider.GetClientAsync<ReleaseHttpClient>(cancellationToken);
+        clientProvider.Setup(organization, pat);
+        using var client = await clientProvider.GetClientAsync<ReleaseHttpClient>(cancellationToken);
         var expand = ReleaseDefinitionExpands.Artifacts;
         var releaseDefinitions = await client.GetReleaseDefinitionsAsync(
             project,
