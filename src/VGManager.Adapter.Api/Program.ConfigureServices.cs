@@ -1,7 +1,6 @@
 using CorrelationId.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
-using VGManager.Adapter.Api;
 using VGManager.Adapter.Api.BackgroundServices;
 using VGManager.Adapter.Api.HealthChecks;
 using VGManager.Adapter.Azure;
@@ -12,6 +11,8 @@ using VGManager.Adapter.Azure.Services.VG;
 using VGManager.Adapter.Interfaces;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Communication.Kafka.Extensions;
+
+namespace VGManager.Adapter.Api;
 
 static partial class Program
 {

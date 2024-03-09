@@ -8,7 +8,7 @@ namespace VGManager.Adapter.Azure.Services;
 
 public class SprintAdapter(IHttpClientProvider clientProvider, ILogger<SprintAdapter> logger) : ISprintAdapter
 {
-    private readonly Regex _regex = new(@".*\b(\d+)\b.*", RegexOptions.Compiled);
+    private readonly Regex _regex = new(@".*\b(\d+)\b.*", RegexOptions.Compiled, new TimeSpan(15000));
 
     public async Task<(AdapterStatus, string)> GetCurrentSprintAsync(string project, CancellationToken cancellationToken = default)
     {
