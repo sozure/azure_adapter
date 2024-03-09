@@ -68,6 +68,8 @@ static partial class Program
     private static void RegisterServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<StartupHealthCheck>();
+        services.AddScoped<ProviderDto>();
+        services.AddScoped<GitProviderDto>();
         services.SetupKafkaConsumer<VGManagerAdapterCommand>(configuration, Constants.SettingKeys.VGManagerAdapterCommandConsumer, false);
         services.SetupKafkaProducer<VGManagerAdapterCommandResponse>(configuration, Constants.SettingKeys.VGManagerAdapterCommandResponseProducer);
 
