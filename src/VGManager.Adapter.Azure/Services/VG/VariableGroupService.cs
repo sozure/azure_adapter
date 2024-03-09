@@ -44,6 +44,7 @@ public class VariableGroupService(
                         Name = vg.Name,
                         Type = vg.Type,
                         Description = vg.Description,
+                        KeyVaultName = vg.KeyVaultName,
                         Variables = vg.Variables.Select(v => new KeyValuePair<string, string>(v.Key, v.Value.Value)).ToDictionary()
                     }),
                     Status = result.Data.Status
@@ -57,7 +58,6 @@ public class VariableGroupService(
                 Data = new AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>(),
             };
         }
-        
     }
 
     public async Task<BaseResponse<AdapterStatus>> AddVariablesAsync(

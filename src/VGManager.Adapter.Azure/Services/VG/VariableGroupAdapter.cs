@@ -230,7 +230,7 @@ public class VariableGroupAdapter(
         return result;
     }
 
-    private IEnumerable<SimplifiedVGResponse<VariableValue>> CollectSubResult(
+    private List<SimplifiedVGResponse<VariableValue>> CollectSubResult(
         Regex regex, 
         bool lightWeightRequest, 
         IEnumerable<VariableGroup> filteredVariableGroups
@@ -252,7 +252,7 @@ public class VariableGroupAdapter(
         return subResultVar;
     }
 
-    private IEnumerable<SimplifiedVGResponse<VariableValue>> CollectSubResult(
+    private List<SimplifiedVGResponse<VariableValue>> CollectSubResult(
         string keyFilter,
         bool lightWeightRequest, 
         IEnumerable<VariableGroup> filteredVariableGroups
