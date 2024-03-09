@@ -104,32 +104,15 @@ public class KeyVaultAdapter(
         CancellationToken cancellationToken = default
         )
     {
-        var payload = PayloadProvider<SecretRequest<string>>.GetPayload(command.Payload);
-        try
-        {
-            if (payload is null)
-            {
-                return ResponseProvider.GetResponse(AdapterStatus.Unknown);
-            }
+        return await ChangeSecretAsync(command, "Delete", cancellationToken);
+    }
 
-            var tenantId = payload.TenantId;
-            var clientId = payload.ClientId;
-            var clientSecret = payload.ClientSecret;
-            var keyVaultName = payload.KeyVaultName;
-            var name = payload.AdditionalData;
-
-            logger.LogDebug("Delete secret {name} in {keyVault}.", name, keyVaultName);
-            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
-            var secretClient = clientProvider.GetSecretClient();
-            await secretClient.StartDeleteSecretAsync(name, cancellationToken);
-            return ResponseProvider.GetResponse(AdapterStatus.Success);
-        }
-        catch (Exception ex)
-        {
-            var status = AdapterStatus.Unknown;
-            logger.LogError(ex, "Couldn't delete secret. Status: {status}.", status);
-            return ResponseProvider.GetResponse(status);
-        }
+    public async Task<BaseResponse<AdapterStatus>> RecoverSecretAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        )
+    {
+        return await ChangeSecretAsync(command, "Recover", cancellationToken);
     }
 
     public async Task<BaseResponse<AdapterResponseModel<IEnumerable<AdapterResponseModel<SimplifiedSecretResponse?>>>>> GetSecretsAsync(
@@ -171,14 +154,14 @@ public class KeyVaultAdapter(
 
             var result = new List<AdapterResponseModel<SimplifiedSecretResponse?>>();
 
-            foreach (var item in results)
+            foreach (var item in results.Select(x => x.Data))
             {
-                var secret = item.Data.Data;
+                var secret = item.Data;
                 if (secret is not null)
                 {
                     result.Add(new()
                     {
-                        Status = item.Data.Status,
+                        Status = item.Status,
                         Data = new SimplifiedSecretResponse
                         {
                             SecretName = secret.Name,
@@ -247,39 +230,6 @@ public class KeyVaultAdapter(
         }
     }
 
-    public async Task<BaseResponse<AdapterStatus>> RecoverSecretAsync(
-        VGManagerAdapterCommand command,
-        CancellationToken cancellationToken = default
-        )
-    {
-        var payload = PayloadProvider<SecretRequest<string>>.GetPayload(command.Payload);
-        try
-        {
-            if (payload is null)
-            {
-                return ResponseProvider.GetResponse(AdapterStatus.Unknown);
-            }
-
-            var tenantId = payload.TenantId;
-            var clientId = payload.ClientId;
-            var clientSecret = payload.ClientSecret;
-            var keyVaultName = payload.KeyVaultName;
-            var name = payload.AdditionalData;
-
-            logger.LogDebug("Recover deleted secret: {secretName} in {keyVault}.", name, keyVaultName);
-            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
-            var secretClient = clientProvider.GetSecretClient();
-            await secretClient.StartRecoverDeletedSecretAsync(name, cancellationToken);
-            return ResponseProvider.GetResponse(AdapterStatus.Success);
-        }
-        catch (Exception ex)
-        {
-            var status = AdapterStatus.Unknown;
-            logger.LogError(ex, "Couldn't recover secret. Status: {status}.", status);
-            return ResponseProvider.GetResponse(status);
-        }
-    }
-
     public BaseResponse<AdapterResponseModel<IEnumerable<Dictionary<string, object>>>> GetDeletedSecrets(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
@@ -338,7 +288,7 @@ public class KeyVaultAdapter(
             var clientSecret = payload.ClientSecret;
             var keyVaultName = payload.KeyVaultName;
 
-            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            clientProvider.Setup(keyVaultName, tenantId, clientId, clientSecret);
             var secretClient = clientProvider.GetSecretClient();
             var secretProperties = secretClient.GetPropertiesOfSecrets(cancellationToken).ToList();
             var results = new List<KeyVaultSecret>();
@@ -365,6 +315,46 @@ public class KeyVaultAdapter(
                 Data = Enumerable.Empty<DeletedSecret>(),
                 Status = AdapterStatus.Unknown
             });
+        }
+    }
+
+    private async Task<BaseResponse<AdapterStatus>> ChangeSecretAsync(
+        VGManagerAdapterCommand command,
+        string actionType,
+        CancellationToken cancellationToken = default
+        )
+    {
+        var payload = PayloadProvider<SecretRequest<string>>.GetPayload(command.Payload);
+        try
+        {
+            if (payload is null)
+            {
+                return ResponseProvider.GetResponse(AdapterStatus.Unknown);
+            }
+
+            var tenantId = payload.TenantId;
+            var clientId = payload.ClientId;
+            var clientSecret = payload.ClientSecret;
+            var keyVaultName = payload.KeyVaultName;
+            var name = payload.AdditionalData;
+
+            logger.LogDebug("{actionType} secret: {secretName} in {keyVault}.", actionType, name, keyVaultName);
+            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            var secretClient = clientProvider.GetSecretClient();
+            if (actionType == "Recover")
+            {
+                await secretClient.StartRecoverDeletedSecretAsync(name, cancellationToken);
+            } else
+            {
+                await secretClient.StartDeleteSecretAsync(name, cancellationToken);
+            }
+            return ResponseProvider.GetResponse(AdapterStatus.Success);
+        }
+        catch (Exception ex)
+        {
+            var status = AdapterStatus.Unknown;
+            logger.LogError(ex, "Couldn't {actionType} secret. Status: {status}.", actionType.ToLower(), status);
+            return ResponseProvider.GetResponse(status);
         }
     }
 

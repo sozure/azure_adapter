@@ -124,8 +124,9 @@ public class ReleasePipelineAdapter(IHttpClientProvider clientProvider, ILogger<
     {
         using var client = await clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
         var variableGroupNames = new List<(string, string)>();
+        var environments = definition.Environments.Where(env => !ExcludableEnvironments.Any(env.Name.Contains));
 
-        foreach (var env in definition.Environments.Where(env => !ExcludableEnvironments.Any(env.Name.Contains)))
+        foreach (var env in environments)
         {
             foreach (var id in env.VariableGroups)
             {
@@ -171,10 +172,11 @@ public class ReleasePipelineAdapter(IHttpClientProvider clientProvider, ILogger<
 
             var workFlowTasks = subResult?.Environments.FirstOrDefault()?.DeployPhases.FirstOrDefault()?.WorkflowTasks.ToList() ??
                 Enumerable.Empty<WorkflowTask>();
-            foreach (var task in workFlowTasks)
+
+            foreach (var task in workFlowTasks.Select(x => x.Inputs))
             {
-                task.Inputs.TryGetValue("configuration", out var configValue);
-                task.Inputs.TryGetValue("command", out var command);
+                task.TryGetValue("configuration", out var configValue);
+                task.TryGetValue("command", out var command);
 
                 if ((configValue?.Contains(configFile) ?? false) && command == "apply")
                 {

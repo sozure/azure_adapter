@@ -97,7 +97,7 @@ public class GitFileAdapter(IHttpClientProvider clientProvider, ILogger<GitFileA
             foreach (var itemBatch in itemsBatch)
             {
                 var elements = itemBatch.Where(item => item.Path.Contains(fileName)).ToList();
-                if (elements.Any())
+                if (elements.Count != 0)
                 {
                     result.Add(elements.FirstOrDefault()?.Path ?? string.Empty);
                 }
@@ -157,7 +157,7 @@ public class GitFileAdapter(IHttpClientProvider clientProvider, ILogger<GitFileA
         }
     }
 
-    private IEnumerable<GitItem> GetConfigFiles(IEnumerable<GitItem> items)
+    private List<GitItem> GetConfigFiles(IEnumerable<GitItem> items)
     {
         var result = new List<GitItem>();
         foreach (var item in items)
