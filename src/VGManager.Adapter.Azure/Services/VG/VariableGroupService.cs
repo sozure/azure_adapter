@@ -79,7 +79,6 @@ public class VariableGroupService(
             if (status == AdapterStatus.Success)
             {
                 var keyFilter = variableGroupAddModel.KeyFilter;
-                var variableGroupFilter = variableGroupAddModel.VariableGroupFilter;
                 var key = variableGroupAddModel.Key;
                 var value = variableGroupAddModel.Value;
                 var filteredVariableGroups = CollectVariableGroups(vgEntity.Data, keyFilter);
@@ -113,7 +112,6 @@ public class VariableGroupService(
 
             if (status == AdapterStatus.Success)
             {
-                var variableGroupFilter = payload.VariableGroupFilter;
                 var keyFilter = payload.KeyFilter;
                 var valueFilter = payload.ValueFilter;
                 var newValue = payload.NewValue;

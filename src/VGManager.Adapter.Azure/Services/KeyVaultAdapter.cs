@@ -154,14 +154,14 @@ public class KeyVaultAdapter(
 
             var result = new List<AdapterResponseModel<SimplifiedSecretResponse?>>();
 
-            foreach (var item in results)
+            foreach (var item in results.Select(x => x.Data))
             {
-                var secret = item.Data.Data;
+                var secret = item.Data;
                 if (secret is not null)
                 {
                     result.Add(new()
                     {
-                        Status = item.Data.Status,
+                        Status = item.Status,
                         Data = new SimplifiedSecretResponse
                         {
                             SecretName = secret.Name,
@@ -288,7 +288,7 @@ public class KeyVaultAdapter(
             var clientSecret = payload.ClientSecret;
             var keyVaultName = payload.KeyVaultName;
 
-            clientProvider.Setup(payload.KeyVaultName, tenantId, clientId, clientSecret);
+            clientProvider.Setup(keyVaultName, tenantId, clientId, clientSecret);
             var secretClient = clientProvider.GetSecretClient();
             var secretProperties = secretClient.GetPropertiesOfSecrets(cancellationToken).ToList();
             var results = new List<KeyVaultSecret>();

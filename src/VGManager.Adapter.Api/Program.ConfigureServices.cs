@@ -16,6 +16,8 @@ namespace VGManager.Adapter.Api;
 
 static partial class Program
 {
+    private static string[] Tags => new[] { "startup" };
+
     public static WebApplicationBuilder ConfigureServices(WebApplicationBuilder self, string specificOrigins)
     {
         var configuration = self.Configuration;
@@ -51,7 +53,7 @@ static partial class Program
         services.AddAuthorization();
         services.AddControllers();
         services.AddHealthChecks()
-            .AddCheck<StartupHealthCheck>(nameof(StartupHealthCheck), tags: new[] { "startup" });
+            .AddCheck<StartupHealthCheck>(nameof(StartupHealthCheck), tags: Tags);
 
         services.AddAutoMapper(
             typeof(Program),

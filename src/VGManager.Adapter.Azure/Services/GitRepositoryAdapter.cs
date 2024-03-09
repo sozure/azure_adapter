@@ -158,7 +158,7 @@ public class GitRepositoryAdapter(IHttpClientProvider clientProvider, ILogger<Gi
         return result;
     }
 
-    private IEnumerable<YamlDocument> GetYamlDocuments(Stream item)
+    private List<YamlDocument> GetYamlDocuments(Stream item)
     {
         var reader = new StreamReader(item);
         var yaml = new YamlStream();
@@ -168,7 +168,7 @@ public class GitRepositoryAdapter(IHttpClientProvider clientProvider, ILogger<Gi
             ).ToList();
     }
 
-    private IEnumerable<string> CollectKeysFromYaml(YamlDocument yaml, string nodeKey)
+    private List<string> CollectKeysFromYaml(YamlDocument yaml, string nodeKey)
     {
         var data = yaml.AllNodes.FirstOrDefault(node => node.ToString().Contains(nodeKey));
         var strNode = data?.ToString() ?? string.Empty;
@@ -177,7 +177,7 @@ public class GitRepositoryAdapter(IHttpClientProvider clientProvider, ILogger<Gi
         return CollectKeysFromYaml(rawVariables);
     }
 
-    private IEnumerable<string> CollectKeysFromYaml(string[] rawVariables)
+    private List<string> CollectKeysFromYaml(string[] rawVariables)
     {
         var result = new List<string>();
         foreach (var rawVariable in rawVariables)
