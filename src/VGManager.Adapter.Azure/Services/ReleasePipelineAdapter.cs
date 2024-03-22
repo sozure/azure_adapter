@@ -2,11 +2,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.Gallery.WebApi;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi.Clients;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi.Contracts;
-using Microsoft.VisualStudio.Services.WebApi;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Kafka;
@@ -15,6 +13,7 @@ using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
 using System.Linq;
 using Microsoft.TeamFoundation.Build.WebApi;
+using Confluent.Kafka;
 
 namespace VGManager.Adapter.Azure.Services;
 
@@ -155,27 +154,40 @@ public class ReleasePipelineAdapter(IHttpClientProvider clientProvider, ILogger<
         using var releaseClient = await clientProvider.GetClientAsync<ReleaseHttpClient>(cancellationToken);
         using var buildClient = await clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
         var expand = ReleaseDefinitionExpands.Artifacts;
-        var releaseDefinitions = await releaseClient.GetReleaseDefinitionsAsync(
-            project,
-            expand: expand,
-            cancellationToken: cancellationToken
-            );
+        var result = await buildClient.GetDefinitionsAsync(project, cancellationToken: cancellationToken);
 
         var foundDefinitions = new List<ReleaseDefinition>();
 
-        foreach (var releaseDefinition in releaseDefinitions)
+        foreach (var def in result)
         {
-            var artifacts = releaseDefinition.Artifacts.ToList();
-            foreach (var artifact in artifacts)
+            if (def.Name == repositoryName)
             {
-                var definitionId = artifact.DefinitionReference.GetValueOrDefault("definition")?.Id ?? string.Empty;
-
-                var buildDef = await buildClient.GetDefinitionAsync(project, int.Parse(definitionId), cancellationToken: cancellationToken);
-                if (buildDef.Name == repositoryName)
+                var results = await releaseClient.GetReleaseDefinitionsAsync(project, expand: expand, cancellationToken: cancellationToken);
+                var res = results.Find(
+                    x => x.Artifacts.Any(artifact => artifact.DefinitionReference.GetValueOrDefault("definition")?.Id == def.Id.ToString())
+                    );
+                if (res is not null)
                 {
-                    foundDefinitions.Add(releaseDefinition);
+                    foundDefinitions.Add(res);
                 }
             }
+        }
+
+        if(foundDefinitions.Count == 0)
+        {
+            var releaseDefinitions = await releaseClient.GetReleaseDefinitionsAsync(
+                project,
+                expand: expand,
+                cancellationToken: cancellationToken
+                );
+
+            foundDefinitions = releaseDefinitions.Where(
+                definition => definition.Artifacts.Any(artifact =>
+                {
+                    var artifactType = artifact.DefinitionReference.GetValueOrDefault("definition")?.Name;
+                    return artifactType?.Equals(repositoryName) ?? false;
+                })
+                ).ToList();
         }
 
         ReleaseDefinition? definition = null!;
