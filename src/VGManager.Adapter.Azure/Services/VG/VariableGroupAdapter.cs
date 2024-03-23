@@ -281,6 +281,7 @@ public class VariableGroupAdapter(
         )
     {
         var newDict = new Dictionary<string, VariableValue>(matchedVariables);
+
         var res = new SimplifiedVGResponse<VariableValue>
         {
             Name = vg.Name,
@@ -289,11 +290,13 @@ public class VariableGroupAdapter(
             Description = vg.Description,
             Variables = newDict
         };
+
         if (vg.Type == VariableGroupType.AzureKeyVault)
         {
             var azProviderData = vg.ProviderData as AzureKeyVaultVariableGroupProviderData;
             res.KeyVaultName = azProviderData?.Vault;
         }
+
         result.Add(res);
     }
 
