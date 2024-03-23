@@ -3,7 +3,8 @@
   <PropertyGroup>
       <ProjectGuid>270D6070-1ED4-4693-9B05-3354210D9E48</ProjectGuid>
       <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
+      <RuntimeIdentifiers>linux-arm64</RuntimeIdentifiers>
+      <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PublishAot>true</PublishAot>
   </PropertyGroup>
