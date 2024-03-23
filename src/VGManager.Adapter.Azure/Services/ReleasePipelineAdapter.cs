@@ -11,6 +11,9 @@ using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Requests;
 using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
+using System.Linq;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Confluent.Kafka;
 
 namespace VGManager.Adapter.Azure.Services;
 
@@ -148,27 +151,50 @@ public class ReleasePipelineAdapter(IHttpClientProvider clientProvider, ILogger<
         )
     {
         clientProvider.Setup(organization, pat);
-        using var client = await clientProvider.GetClientAsync<ReleaseHttpClient>(cancellationToken);
+        using var releaseClient = await clientProvider.GetClientAsync<ReleaseHttpClient>(cancellationToken);
+        using var buildClient = await clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
         var expand = ReleaseDefinitionExpands.Artifacts;
-        var releaseDefinitions = await client.GetReleaseDefinitionsAsync(
-            project,
-            expand: expand,
-            cancellationToken: cancellationToken
-            );
+        var result = await buildClient.GetDefinitionsAsync(project, cancellationToken: cancellationToken);
 
-        var foundDefinitions = releaseDefinitions.Where(
-            definition => definition.Artifacts.Any(artifact =>
+        var foundDefinitions = new List<ReleaseDefinition>();
+
+        foreach (var def in result)
+        {
+            if (def.Name == repositoryName)
             {
-                var artifactType = artifact.DefinitionReference.GetValueOrDefault("definition")?.Name;
-                return artifactType?.Equals(repositoryName) ?? false;
-            })
-            );
+                var results = await releaseClient.GetReleaseDefinitionsAsync(project, expand: expand, cancellationToken: cancellationToken);
+                var res = results.Find(
+                    x => x.Artifacts.Any(artifact => artifact.DefinitionReference.GetValueOrDefault("definition")?.Id == def.Id.ToString())
+                    );
+                if (res is not null)
+                {
+                    foundDefinitions.Add(res);
+                }
+            }
+        }
+
+        if(foundDefinitions.Count == 0)
+        {
+            var releaseDefinitions = await releaseClient.GetReleaseDefinitionsAsync(
+                project,
+                expand: expand,
+                cancellationToken: cancellationToken
+                );
+
+            foundDefinitions = releaseDefinitions.Where(
+                definition => definition.Artifacts.Any(artifact =>
+                {
+                    var artifactType = artifact.DefinitionReference.GetValueOrDefault("definition")?.Name;
+                    return artifactType?.Equals(repositoryName) ?? false;
+                })
+                ).ToList();
+        }
 
         ReleaseDefinition? definition = null!;
 
         foreach (var def in foundDefinitions)
         {
-            var subResult = await client.GetReleaseDefinitionAsync(project, def?.Id ?? 0, cancellationToken: cancellationToken);
+            var subResult = await releaseClient.GetReleaseDefinitionAsync(project, def?.Id ?? 0, cancellationToken: cancellationToken);
 
             var workFlowTasks = subResult?.Environments.FirstOrDefault()?.DeployPhases.FirstOrDefault()?.WorkflowTasks.ToList() ??
                 Enumerable.Empty<WorkflowTask>();
