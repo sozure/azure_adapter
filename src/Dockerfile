@@ -4,7 +4,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY . .
 RUN dotnet restore "./VGManager.Adapter.Api/VGManager.Adapter.Api.csproj" --disable-parallel
-RUN dotnet publish "./VGManager.Adapter.Api/VGManager.Adapter.Api.csproj" -c release -o /app --no-restore
+RUN dotnet publish "./VGManager.Adapter.Api/VGManager.Adapter.Api.csproj" -r linux-arm64 -c release -o /app --no-restore
 
 # Serve Stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
