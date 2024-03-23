@@ -3,14 +3,12 @@
   <PropertyGroup>
       <ProjectGuid>270D6070-1ED4-4693-9B05-3354210D9E48</ProjectGuid>
       <TargetFramework>net8.0</TargetFramework>
-      <RuntimeIdentifiers>linux-arm64</RuntimeIdentifiers>
       <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <PublishAot>true</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
       <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
   </ItemGroup>
 

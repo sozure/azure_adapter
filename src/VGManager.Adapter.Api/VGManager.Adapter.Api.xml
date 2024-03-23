@@ -4,11 +4,5 @@
         <name>VGManager.Adapter.Api</name>
     </assembly>
     <members>
-        <member name="M:Microsoft.Extensions.Configuration.Binder.SourceGeneration.BindingExtensions.Get``1(Microsoft.Extensions.Configuration.IConfiguration)">
-            <summary>Attempts to bind the configuration instance to a new instance of type T.</summary>
-        </member>
-        <member name="M:Microsoft.Extensions.Configuration.Binder.SourceGeneration.BindingExtensions.ValidateConfigurationKeys(System.Type,System.Lazy{System.Collections.Generic.HashSet{System.String}},Microsoft.Extensions.Configuration.IConfiguration,Microsoft.Extensions.Configuration.BinderOptions)">
-            <summary>If required by the binder options, validates that there are no unknown keys in the input configuration object.</summary>
-        </member>
     </members>
 </doc>
