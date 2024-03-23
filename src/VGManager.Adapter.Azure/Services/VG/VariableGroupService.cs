@@ -78,11 +78,9 @@ public class VariableGroupService(
 
             if (status == AdapterStatus.Success)
             {
-                var keyFilter = variableGroupAddModel.KeyFilter;
                 var key = variableGroupAddModel.Key;
                 var value = variableGroupAddModel.Value;
-                var filteredVariableGroups = CollectVariableGroups(vgEntity.Data, keyFilter);
-
+                var filteredVariableGroups = vgEntity.Data.Data;
                 var finalStatus = await AddVariablesAsync(variableGroupAddModel, filteredVariableGroups, key, value, cancellationToken);
                 return GetResult(finalStatus);
             }
@@ -267,6 +265,7 @@ public class VariableGroupService(
         )
     {
         var updateCounter = 0;
+        var alreadyContainsCounter = 0;
         var counter = 0;
         foreach (var filteredVariableGroup in filteredVariableGroups)
         {
@@ -289,7 +288,7 @@ public class VariableGroupService(
                     filteredVariableGroup.Name,
                     key
                     );
-                updateCounter++;
+                alreadyContainsCounter++;
             }
 
             catch (Exception ex)
@@ -302,6 +301,12 @@ public class VariableGroupService(
                     );
             }
         }
+
+        if(alreadyContainsCounter > 0)
+        {
+            return AdapterStatus.AlreadyContains;
+        }
+
         return updateCounter == counter ? AdapterStatus.Success : AdapterStatus.Unknown;
     }
 
@@ -325,36 +330,6 @@ public class VariableGroupService(
         }
 
         return false;
-    }
-
-    private IEnumerable<SimplifiedVGResponse<VariableValue>> CollectVariableGroups(
-        AdapterResponseModel<IEnumerable<SimplifiedVGResponse<VariableValue>>> vgEntity,
-        string? keyFilter
-        )
-    {
-        IEnumerable<SimplifiedVGResponse<VariableValue>> filteredVariableGroups;
-        if (keyFilter is not null)
-        {
-            try
-            {
-                var regex = new Regex(keyFilter.ToLower(), RegexOptions.None, TimeSpan.FromMilliseconds(5));
-
-                filteredVariableGroups = vgEntity.Data.Select(vg => vg)
-                .Where(vg => vg.Variables.Keys.ToList().FindAll(key => regex.IsMatch(key.ToLower())).Count == 0);
-            }
-            catch (RegexParseException ex)
-            {
-                logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", keyFilter);
-                filteredVariableGroups = vgEntity.Data.Select(vg => vg)
-                .Where(vg => vg.Variables.Keys.ToList().FindAll(key => keyFilter.ToLower() == key.ToLower()).Count == 0);
-            }
-        }
-        else
-        {
-            return vgEntity.Data;
-        }
-
-        return filteredVariableGroups;
     }
 
     private async Task<AdapterStatus> UpdateVariableGroupsAsync(
