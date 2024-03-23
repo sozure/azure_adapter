@@ -4,7 +4,7 @@
       <ProjectGuid>E5F83A2D-3AA1-420D-AD6A-C5C1268F94F3</ProjectGuid>
       <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+      <Nullable>enable</Nullable>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
