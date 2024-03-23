@@ -12,12 +12,12 @@ public class CommandProcessorBackgroundService(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         Console.WriteLine("Consume");
-        await consumerService.ConsumeAsync(stoppingToken, async (message) =>
+        await consumerService.ConsumeAsync(async (message) =>
         {
             using var scope = serviceProvider.CreateScope();
             var commandProcessorService = scope.ServiceProvider.GetRequiredService<ICommandProcessorService>();
 
             await commandProcessorService.ProcessCommandAsync(message, stoppingToken);
-        });
+        }, stoppingToken);
     }
 }
