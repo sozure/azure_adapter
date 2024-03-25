@@ -23,6 +23,8 @@ public class GitRepositoryAdapter(
     private readonly GitRepositoryAdapterSettings Settings = options.Value;
     private readonly ExtensionSettings ExtensionSettings = options2.Value;
 
+    private readonly char[] NotAllowedCharacters = ['{', '}', ' ', '(', ')', '$'];
+
     public async Task<BaseResponse<IEnumerable<GitRepository>>> GetAllAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
@@ -193,7 +195,7 @@ public class GitRepositoryAdapter(
                     startCollecting = true;
                 }
                 if (startCollecting &&
-                    !Settings.NotAllowedCharacters.Contains(character)
+                    !NotAllowedCharacters.Contains(character)
                     )
                 {
                     strBuilder.Append(character);
