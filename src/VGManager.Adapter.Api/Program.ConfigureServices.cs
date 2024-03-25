@@ -8,6 +8,7 @@ using VGManager.Adapter.Azure.Services;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Azure.Services.VG;
+using VGManager.Adapter.Azure.Settings;
 using VGManager.Adapter.Interfaces;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Communication.Kafka.Extensions;
@@ -59,6 +60,21 @@ static partial class Program
             typeof(Program),
             typeof(CommandMessageProfile)
         );
+
+        services.AddOptions<GitRepositoryAdapterSettings>()
+            .Bind(configuration.GetSection(Constants.SettingKeys.GitRepositoryAdapterSettings))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<ReleasePipelineAdapterSettings>()
+            .Bind(configuration.GetSection(Constants.SettingKeys.ReleasePipelineAdapterSettings))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<ExtensionSettings>()
+            .Bind(configuration.GetSection(Constants.SettingKeys.ExtensionSettings))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         RegisterServices(services, configuration);
 
