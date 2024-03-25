@@ -25,7 +25,7 @@ public class VariableGroupService(
         try
         {
             var payload = PayloadProvider<GetVGRequest>.GetPayload(command.Payload);
-            if(payload is null)
+            if (payload is null)
             {
                 return new BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>>
                 {
@@ -51,7 +51,8 @@ public class VariableGroupService(
                 },
             };
 
-        } catch (Exception)
+        }
+        catch (Exception)
         {
             return new BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>>
             {
@@ -175,7 +176,7 @@ public class VariableGroupService(
             return GetErrorResult();
         }
     }
-    
+
     public async Task<BaseResponse<AdapterResponseModel<int>>> GetNumberOfFoundVGsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
@@ -189,7 +190,8 @@ public class VariableGroupService(
                 return GetErrorResult2();
             }
             return await variableGroupAdapter.GetNumberOfFoundVGsAsync(payload, cancellationToken);
-        } catch (Exception)
+        }
+        catch (Exception)
         {
             return GetErrorResult2();
         }
@@ -302,7 +304,7 @@ public class VariableGroupService(
             }
         }
 
-        if(alreadyContainsCounter > 0)
+        if (alreadyContainsCounter > 0)
         {
             return AdapterStatus.AlreadyContains;
         }
@@ -366,9 +368,9 @@ public class VariableGroupService(
     }
 
     private async Task<AdapterStatus> SendUpdateAsync(
-        VariableGroupModel model, 
-        SimplifiedVGResponse<VariableValue> filteredVariableGroup, 
-        VariableGroupParameters variableGroupParameters, 
+        VariableGroupModel model,
+        SimplifiedVGResponse<VariableValue> filteredVariableGroup,
+        VariableGroupParameters variableGroupParameters,
         CancellationToken cancellationToken
         )
     {

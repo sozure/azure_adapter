@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.VisualStudio.Services.Common;
@@ -7,20 +9,21 @@ using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi.Clients;
 using Microsoft.VisualStudio.Services.ReleaseManagement.WebApi.Contracts;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
+using VGManager.Adapter.Azure.Settings;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Requests;
 using VGManager.Adapter.Models.Response;
 using VGManager.Adapter.Models.StatusEnums;
-using System.Linq;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Confluent.Kafka;
 
 namespace VGManager.Adapter.Azure.Services;
 
-public class ReleasePipelineAdapter(IHttpClientProvider clientProvider, ILogger<ReleasePipelineAdapter> logger) : IReleasePipelineAdapter
+public class ReleasePipelineAdapter(
+    IHttpClientProvider clientProvider,
+    IOptions<ReleasePipelineAdapterSettings> options,
+    ILogger<ReleasePipelineAdapter> logger
+    ) : IReleasePipelineAdapter
 {
-    private readonly string[] Replacable = { "Deploy to ", "Transfer to " };
-    private readonly string[] ExcludableEnvironments = { "OTP container registry" };
+    private readonly ReleasePipelineAdapterSettings Settings = options.Value;
 
     public async Task<BaseResponse<Dictionary<string, object>>> GetEnvironmentsAsync(
         VGManagerAdapterCommand command,
@@ -45,12 +48,12 @@ public class ReleasePipelineAdapter(IHttpClientProvider clientProvider, ILogger<
 
             foreach (var rawElement in rawResult)
             {
-                var element = Replacable.Where(rawElement.Contains).Select(replace => rawElement.Replace(replace, string.Empty));
+                var element = Settings.Replacable.Where(rawElement.Contains).Select(replace => rawElement.Replace(replace, string.Empty));
                 if (!element.Any())
                 {
                     element = new[] { rawElement };
                 }
-                result.AddRange(element.Where(element => !ExcludableEnvironments.Contains(element)));
+                result.AddRange(element.Where(element => !Settings.ExcludableEnvironments.Contains(element)));
             }
 
             return ResponseProvider.GetResponse((
@@ -127,7 +130,7 @@ public class ReleasePipelineAdapter(IHttpClientProvider clientProvider, ILogger<
     {
         using var client = await clientProvider.GetClientAsync<TaskAgentHttpClient>(cancellationToken: cancellationToken);
         var variableGroupNames = new List<(string, string)>();
-        var environments = definition.Environments.Where(env => !ExcludableEnvironments.Any(env.Name.Contains));
+        var environments = definition.Environments.Where(env => !Settings.ExcludableEnvironments.Any(env.Name.Contains));
 
         foreach (var env in environments)
         {
@@ -173,7 +176,7 @@ public class ReleasePipelineAdapter(IHttpClientProvider clientProvider, ILogger<
             }
         }
 
-        if(foundDefinitions.Count == 0)
+        if (foundDefinitions.Count == 0)
         {
             var releaseDefinitions = await releaseClient.GetReleaseDefinitionsAsync(
                 project,

@@ -100,7 +100,7 @@ public class GitVersionAdapter(
             clientProvider.Setup(payload.Organization, payload.PAT);
             logger.LogInformation("Request git tags from {project} git project.", repositoryId);
             using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
-            
+
             var sprint = await sprintAdapter.GetCurrentSprintAsync(payload.Project, cancellationToken);
             var branch = await client.GetBranchAsync(
                 project,

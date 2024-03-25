@@ -344,7 +344,8 @@ public class KeyVaultAdapter(
             if (actionType == "Recover")
             {
                 await secretClient.StartRecoverDeletedSecretAsync(name, cancellationToken);
-            } else
+            }
+            else
             {
                 await secretClient.StartDeleteSecretAsync(name, cancellationToken);
             }

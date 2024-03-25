@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
+using VGManager.Adapter.Azure.Settings;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Requests;
 using VGManager.Adapter.Models.Response;
@@ -10,9 +12,13 @@ using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
 
-public class GitFileAdapter(IHttpClientProvider clientProvider, ILogger<GitFileAdapter> logger) : IGitFileAdapter
+public class GitFileAdapter(
+    IHttpClientProvider clientProvider,
+    IOptions<ExtensionSettings> options,
+    ILogger<GitFileAdapter> logger
+    ) : IGitFileAdapter
 {
-    private readonly string[] Extensions = { "yaml" };
+    private readonly string[] Extensions = [options.Value.YamlExtension];
 
     public async Task<BaseResponse<Dictionary<string, object>>> GetFilePathAsync(
         VGManagerAdapterCommand command,

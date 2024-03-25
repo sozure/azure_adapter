@@ -1,9 +1,11 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using System.Text;
 using System.Text.Json;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
+using VGManager.Adapter.Azure.Settings;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Requests;
 using VGManager.Adapter.Models.Response;
@@ -11,15 +13,15 @@ using YamlDotNet.RepresentationModel;
 
 namespace VGManager.Adapter.Azure.Services;
 
-public class GitRepositoryAdapter(IHttpClientProvider clientProvider, ILogger<GitRepositoryAdapter> logger) : IGitRepositoryAdapter
+public class GitRepositoryAdapter(
+    IHttpClientProvider clientProvider,
+    IOptions<GitRepositoryAdapterSettings> options,
+    IOptions<ExtensionSettings> options2,
+    ILogger<GitRepositoryAdapter> logger
+    ) : IGitRepositoryAdapter
 {
-    private readonly char[] _notAllowedCharacters = ['{', '}', ' ', '(', ')', '$'];
-    private readonly char _startingChar = '$';
-    private readonly char _endingChar = '}';
-    private readonly string _secretYamlKind = "Secret";
-    private readonly string _secretYamlElement = "stringData";
-    private readonly string _variableYamlKind = "ConfigMap";
-    private readonly string _variableYamlElement = "data";
+    private readonly GitRepositoryAdapterSettings Settings = options.Value;
+    private readonly ExtensionSettings ExtensionSettings = options2.Value;
 
     public async Task<BaseResponse<IEnumerable<GitRepository>>> GetAllAsync(
         VGManagerAdapterCommand command,
@@ -75,13 +77,13 @@ public class GitRepositoryAdapter(IHttpClientProvider clientProvider, ILogger<Gi
             cancellationToken: cancellationToken
             );
 
-        if (payload.FilePath.EndsWith(".json"))
+        if (payload.FilePath.EndsWith(ExtensionSettings.JsonExtension))
         {
             var json = await GetJsonObjectAsync(item, cancellationToken);
             var result = GetKeysFromJson(json, payload.Exceptions ?? Enumerable.Empty<string>(), payload.Delimiter);
             return ResponseProvider.GetResponse(result);
         }
-        else if (payload.FilePath.EndsWith(".yaml"))
+        else if (payload.FilePath.EndsWith(ExtensionSettings.YamlExtension))
         {
             return ResponseProvider.GetResponse(GetKeysFromYaml(item));
         }
@@ -147,7 +149,7 @@ public class GitRepositoryAdapter(IHttpClientProvider clientProvider, ILogger<Gi
         var counter = 0;
         foreach (var yaml in yamls)
         {
-            var subResult = CollectKeysFromYaml(yaml, counter == 0 ? _variableYamlElement : _secretYamlElement);
+            var subResult = CollectKeysFromYaml(yaml, counter == 0 ? Settings.VariableYamlElement : Settings.SecretYamlElement);
             result.AddRange(subResult);
             counter++;
             if (counter == 2)
@@ -164,7 +166,7 @@ public class GitRepositoryAdapter(IHttpClientProvider clientProvider, ILogger<Gi
         var yaml = new YamlStream();
         yaml.Load(reader);
         return yaml.Documents.Where(
-            document => document.AllNodes.Contains(_secretYamlKind) || document.AllNodes.Contains(_variableYamlKind)
+            document => document.AllNodes.Contains(Settings.SecretYamlKind) || document.AllNodes.Contains(Settings.VariableYamlKind)
             ).ToList();
     }
 
@@ -186,17 +188,17 @@ public class GitRepositoryAdapter(IHttpClientProvider clientProvider, ILogger<Gi
             var startCollecting = false;
             foreach (var character in rawVariable)
             {
-                if (character == _startingChar)
+                if (character == Settings.StartingChar)
                 {
                     startCollecting = true;
                 }
                 if (startCollecting &&
-                    !_notAllowedCharacters.Contains(character)
+                    !Settings.NotAllowedCharacters.Contains(character)
                     )
                 {
                     strBuilder.Append(character);
                 }
-                else if (character == _endingChar)
+                else if (character == Settings.EndingChar)
                 {
                     startCollecting = false;
                 }
