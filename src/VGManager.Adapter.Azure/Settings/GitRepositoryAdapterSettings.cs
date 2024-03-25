@@ -2,7 +2,6 @@ namespace VGManager.Adapter.Azure.Settings;
 
 public class GitRepositoryAdapterSettings
 {
-    public char[] NotAllowedCharacters { get; set; } = [];
     public required char StartingChar { get; set; }
     public required char EndingChar { get; set; }
     public required string SecretYamlKind { get; set; }
