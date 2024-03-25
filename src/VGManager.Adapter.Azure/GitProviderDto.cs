@@ -3,8 +3,8 @@ using VGManager.Adapter.Azure.Services.Interfaces;
 namespace VGManager.Adapter.Azure;
 
 public class GitProviderDto(
-    IGitRepositoryAdapter gitRepositoryAdapter, 
-    IGitVersionAdapter gitVersionAdapter, 
+    IGitRepositoryAdapter gitRepositoryAdapter,
+    IGitVersionAdapter gitVersionAdapter,
     IGitFileAdapter gitFileAdapter
     )
 {

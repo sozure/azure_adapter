@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Options;
-
 namespace VGManager.Adapter.Azure.Settings;
 
 public class GitRepositoryAdapterSettings
@@ -10,5 +8,5 @@ public class GitRepositoryAdapterSettings
     public required string SecretYamlKind { get; set; }
     public required string SecretYamlElement { get; set; }
     public required string VariableYamlKind { get; set; }
-    public required string VariableYamlElement { get; set;}
+    public required string VariableYamlElement { get; set; }
 }

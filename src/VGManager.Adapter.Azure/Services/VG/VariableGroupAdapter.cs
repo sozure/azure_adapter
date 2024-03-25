@@ -63,7 +63,7 @@ public class VariableGroupAdapter(
     {
         try
         {
-            if(request is null)
+            if (request is null)
             {
                 return ResponseProvider.GetResponse(new AdapterResponseModel<int>()
                 {
@@ -199,8 +199,8 @@ public class VariableGroupAdapter(
     }
 
     private List<SimplifiedVGResponse<VariableValue>> CollectResult(
-        GetVGRequest request, 
-        bool lightWeightRequest, 
+        GetVGRequest request,
+        bool lightWeightRequest,
         IEnumerable<VariableGroup> filteredVariableGroups
         )
     {
@@ -231,8 +231,8 @@ public class VariableGroupAdapter(
     }
 
     private List<SimplifiedVGResponse<VariableValue>> CollectSubResult(
-        Regex regex, 
-        bool lightWeightRequest, 
+        Regex regex,
+        bool lightWeightRequest,
         IEnumerable<VariableGroup> filteredVariableGroups
         )
     {
@@ -254,7 +254,7 @@ public class VariableGroupAdapter(
 
     private List<SimplifiedVGResponse<VariableValue>> CollectSubResult(
         string keyFilter,
-        bool lightWeightRequest, 
+        bool lightWeightRequest,
         IEnumerable<VariableGroup> filteredVariableGroups
         )
     {

@@ -1,5 +1,3 @@
-using Microsoft.TeamFoundation.DistributedTask.WebApi;
-
 namespace VGManager.Adapter.Models.Response;
 
 public class SimplifiedVGResponse<T>

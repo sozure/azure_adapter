@@ -1,4 +1,3 @@
-using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Models;
 using VGManager.Adapter.Models.Response;
