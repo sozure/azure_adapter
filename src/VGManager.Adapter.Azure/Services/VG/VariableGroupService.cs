@@ -134,6 +134,7 @@ public class VariableGroupService(
                     vgEntity.Data.Data,
                     keyFilter,
                     valueRegex,
+                    valueFilter,
                     cancellationToken
                     );
 
@@ -340,6 +341,7 @@ public class VariableGroupService(
         IEnumerable<SimplifiedVGResponse<VariableValue>> filteredVariableGroups,
         string keyFilter,
         Regex? valueRegex,
+        string? valueFilter,
         CancellationToken cancellationToken
         )
     {
@@ -349,7 +351,7 @@ public class VariableGroupService(
         foreach (var filteredVariableGroup in filteredVariableGroups)
         {
             var variableGroupName = filteredVariableGroup.Name;
-            var updateIsNeeded = UpdateVariables(newValue, keyFilter, valueRegex, filteredVariableGroup);
+            var updateIsNeeded = UpdateVariables(newValue, keyFilter, valueRegex, valueFilter, filteredVariableGroup);
 
             if (updateIsNeeded)
             {
@@ -389,7 +391,8 @@ public class VariableGroupService(
     private bool UpdateVariables(
         string newValue,
         string keyFilter,
-        Regex? regex,
+        Regex? valueRegex,
+        string? valueFilter,
         SimplifiedVGResponse<VariableValue> filteredVariableGroup
         )
     {
@@ -398,25 +401,34 @@ public class VariableGroupService(
 
         foreach (var filteredVariable in filteredVariables)
         {
-            updateIsNeeded = IsUpdateNeeded(filteredVariable, regex, newValue);
+            updateIsNeeded = IsUpdateNeeded(filteredVariable, valueRegex, valueFilter, newValue);
         }
 
         return updateIsNeeded;
     }
 
-    private static bool IsUpdateNeeded(KeyValuePair<string, VariableValue> filteredVariable, Regex? regex, string newValue)
+    private static bool IsUpdateNeeded(
+        KeyValuePair<string, VariableValue> filteredVariable, 
+        Regex? valueRegex, 
+        string? valueFilter, 
+        string newValue
+        )
     {
         var variableValue = filteredVariable.Value.Value;
 
-        if (regex is not null)
+        if(valueRegex is not null && valueRegex.IsMatch(variableValue.ToLower()))
         {
-            if (regex.IsMatch(variableValue.ToLower()))
-            {
-                filteredVariable.Value.Value = newValue;
-                return true;
-            }
+            filteredVariable.Value.Value = newValue;
+            return true;
         }
-        else
+
+        if (valueFilter is not null && variableValue.Contains(valueFilter))
+        {
+            filteredVariable.Value.Value = newValue;
+            return true;
+        }
+
+        if(valueRegex is null && valueFilter is null)
         {
             filteredVariable.Value.Value = newValue;
             return true;
