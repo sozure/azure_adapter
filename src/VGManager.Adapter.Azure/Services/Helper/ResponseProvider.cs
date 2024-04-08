@@ -195,5 +195,15 @@ public static class ResponseProvider
             Data = result
         };
     }
+
+    public static BaseResponse<AdapterResponseModel<List<GitPullRequest>>> GetResponse(
+        AdapterResponseModel<List<GitPullRequest>> result
+        )
+    {
+        return new()
+        {
+            Data = result
+        };
+    }
 }
 
