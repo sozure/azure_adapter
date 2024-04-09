@@ -139,7 +139,7 @@ public class CommandProcessorService(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
-                CommandTypes.GetPullRequestsRequest => await providerDto.PullRequestAdapter.GetPullRequests(
+                CommandTypes.GetPullRequestsRequest => await providerDto.PullRequestAdapter.GetPullRequestsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),

@@ -104,6 +104,7 @@ static partial class Program
         services.AddScoped<IReleasePipelineAdapter, ReleasePipelineAdapter>();
         services.AddScoped<IBuildPipelineAdapter, BuildPipelineAdapter>();
         services.AddScoped<ISprintAdapter, SprintAdapter>();
+        services.AddScoped<IPullRequestAdapter, PullRequestAdapter>();
         services.AddHostedService<CommandProcessorBackgroundService>();
     }
 }
