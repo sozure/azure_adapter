@@ -7,7 +7,7 @@ namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IPullRequestAdapter
 {
-    Task<BaseResponse<AdapterResponseModel<List<GitPullRequest>>>> GetPullRequests(
+    Task<BaseResponse<AdapterResponseModel<List<GitPRResponse>>>> GetPullRequestsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken
         );

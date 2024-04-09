@@ -196,8 +196,8 @@ public static class ResponseProvider
         };
     }
 
-    public static BaseResponse<AdapterResponseModel<List<GitPullRequest>>> GetResponse(
-        AdapterResponseModel<List<GitPullRequest>> result
+    public static BaseResponse<AdapterResponseModel<List<GitPRResponse>>> GetResponse(
+        AdapterResponseModel<List<GitPRResponse>> result
         )
     {
         return new()
