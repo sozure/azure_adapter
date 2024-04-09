@@ -31,4 +31,6 @@ public static class CommandTypes
     public const string GetDeletedSecretsRequest = nameof(GetDeletedSecretsRequest);
     public const string GetAllSecretsRequest = nameof(GetAllSecretsRequest);
     public const string GetPullRequestsRequest = nameof(GetPullRequestsRequest);
+    public const string CreatePullRequestRequest = nameof(CreatePullRequestRequest);
+    public const string CreatePullRequestsRequest = nameof(CreatePullRequestsRequest);
 }

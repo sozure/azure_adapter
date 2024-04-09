@@ -143,6 +143,14 @@ public class CommandProcessorService(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                 ),
+                CommandTypes.CreatePullRequestRequest => await providerDto.PullRequestAdapter.CreatePullRequestAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
+                CommandTypes.CreatePullRequestsRequest => await providerDto.PullRequestAdapter.CreatePullRequestsAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                ),
                 _ => throw new InvalidOperationException($"Invalid command type: {commandMessage.CommandType}"),
             };
 

@@ -1,6 +1,6 @@
 namespace VGManager.Adapter.Models.Requests;
 
-public class PRRequest
+public class GitPRRequest
 {
     public required string Organization { get; set; }
     public required string PAT { get; set; }

@@ -19,7 +19,7 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
         CancellationToken cancellationToken
         )
     {
-        var payload = PayloadProvider<PRRequest>.GetPayload(command.Payload);
+        var payload = PayloadProvider<GitPRRequest>.GetPayload(command.Payload);
 
         if (payload is null)
         {
@@ -35,7 +35,7 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
 
             clientProvider.Setup(organization, payload.PAT);
             using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
-            
+
             var repositories = await client.GetRepositoriesAsync(cancellationToken: cancellationToken);
             repositories = repositories.Where(repo => !repo.IsDisabled ?? false).ToList();
 
@@ -50,46 +50,17 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
                 Status = PullRequestStatus.Active
             };
 
-            var result = new List<GitPRResponse>();
-
-            foreach (var repository in repositories)
-            {
-                var prs = await client.GetPullRequestsAsync(
-                    payload.Project,
-                    repository.Id,
-                    searchCriteria,
-                    cancellationToken: cancellationToken
-                );
-
-                foreach(var pr in prs)
-                {
-                    var size = await GetPRSize(client, repository, pr, cancellationToken);
-                    (var days, var strAge) = GetPRAge(pr);
-                    var project = repository.ProjectReference.Name;
-                    result.Add(new()
-                    {
-                        Title = pr.Title,
-                        Repository = repository.Name,
-                        Url = $"https://dev.azure.com/{organization}/{project}/_git/{pr.Repository.Id}/pullRequest/{pr.PullRequestId}",
-                        CreatedBy = pr.CreatedBy.DisplayName,
-                        Project = project,
-                        Created = strAge,
-                        Size = size,
-                        Days = days
-                    });
-                }
-            }
-
-            var sortedResult = result.OrderBy(pr => pr.Days).ToList();
+            var result = await CollectionPullRequests(organization, payload.Project, client, repositories, searchCriteria, cancellationToken);
 
             return ResponseProvider.GetResponse(
                 new AdapterResponseModel<List<GitPRResponse>>()
                 {
-                    Data = sortedResult,
+                    Data = result,
                     Status = AdapterStatus.Success
                 }
             );
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             logger.LogError(ex, "Error getting git pull requests from {project} azure project.", payload?.Project ?? "Unknown");
             return ResponseProvider.GetResponse(
@@ -98,10 +69,161 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
         }
     }
 
+    public async Task<BaseResponse<AdapterResponseModel<bool>>> CreatePullRequestAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken
+        )
+    {
+        var payload = PayloadProvider<CreatePRRequest>.GetPayload(command.Payload);
+
+        if (payload is null)
+        {
+            return ResponseProvider.GetResponse(
+                GetFailResponse(false)
+            );
+        }
+
+        try
+        {
+            logger.LogInformation("Create git pull request for {repository} git repository.", payload.Repository);
+            var organization = payload.Organization;
+
+            clientProvider.Setup(organization, payload.PAT);
+            using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
+
+            var prRequest = new GitPullRequest
+            {
+                SourceRefName = payload.SourceBranch,
+                TargetRefName = payload.TargetBranch,
+                Title = payload.Title,
+                Description = "",
+                Status = PullRequestStatus.Completed
+            };
+
+            var pr = await client.CreatePullRequestAsync(prRequest, payload.Project, payload.Repository, cancellationToken: cancellationToken);
+
+            return ResponseProvider.GetResponse(
+                new AdapterResponseModel<bool>()
+                {
+                    Data = pr is not null,
+                    Status = AdapterStatus.Success
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting git pull requests from {project} azure project.", payload?.Project ?? "Unknown");
+            return ResponseProvider.GetResponse(
+                GetFailResponse(false)
+            );
+        }
+    }
+
+    public async Task<BaseResponse<AdapterResponseModel<bool>>> CreatePullRequestsAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken
+        )
+    {
+        var payload = PayloadProvider<CreatePRsRequest>.GetPayload(command.Payload);
+
+        if (payload is null)
+        {
+            return ResponseProvider.GetResponse(
+                GetFailResponse(false)
+            );
+        }
+
+        try
+        {
+            logger.LogInformation("Create git pull requests.");
+            var organization = payload.Organization;
+
+            clientProvider.Setup(organization, payload.PAT);
+            using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
+
+            foreach (var repository in payload.Repositories)
+            {
+                var branches = await client.GetBranchesAsync(repository, cancellationToken: cancellationToken);
+
+                var sourceBranch = branches.Find(branch => payload.SourceBranch.Contains(branch.Name))?.Name ?? string.Empty;
+                var targetBranch = branches.Find(branch => payload.TargetBranch.Contains(branch.Name))?.Name ?? string.Empty;
+
+                if (!string.IsNullOrEmpty(sourceBranch) && !string.IsNullOrEmpty(targetBranch))
+                {
+                    var prRequest = new GitPullRequest
+                    {
+                        SourceRefName = sourceBranch,
+                        TargetRefName = targetBranch,
+                        Title = payload.Title,
+                        Description = "",
+                        Status = PullRequestStatus.Completed
+                    };
+
+                    _ = await client.CreatePullRequestAsync(prRequest, payload.Project, repository, cancellationToken: cancellationToken);
+                }
+            }
+
+            return ResponseProvider.GetResponse(
+                new AdapterResponseModel<bool>()
+                {
+                    Data = true,
+                    Status = AdapterStatus.Success
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting git pull requests from {project} azure project.", payload?.Project ?? "Unknown");
+            return ResponseProvider.GetResponse(
+                GetFailResponse(false)
+            );
+        }
+    }
+
+    private static async Task<List<GitPRResponse>> CollectionPullRequests(
+        string organization,
+        string? payloadProject,
+        GitHttpClient client,
+        List<GitRepository> repositories,
+        GitPullRequestSearchCriteria searchCriteria, CancellationToken cancellationToken
+        )
+    {
+        var result = new List<GitPRResponse>();
+        foreach (var repository in repositories)
+        {
+            var prs = await client.GetPullRequestsAsync(
+                payloadProject,
+                repository.Id,
+                searchCriteria,
+                cancellationToken: cancellationToken
+            );
+
+            foreach (var pr in prs)
+            {
+                var size = await GetPRSize(client, repository, pr, cancellationToken);
+                (var days, var strAge) = GetPRAge(pr);
+                var project = repository.ProjectReference.Name;
+                result.Add(new()
+                {
+                    Title = pr.Title,
+                    Repository = repository.Name,
+                    Url = $"https://dev.azure.com/{organization}/{project}/_git/{pr.Repository.Id}/pullRequest/{pr.PullRequestId}",
+                    CreatedBy = pr.CreatedBy.DisplayName,
+                    Project = project,
+                    Created = strAge,
+                    Size = size,
+                    Days = days
+                });
+            }
+        }
+        var sortedResult = result.OrderBy(pr => pr.Days).ToList();
+        return sortedResult;
+    }
+
     private static async Task<string> GetPRSize(
-        GitHttpClient client, 
-        GitRepository repository, 
-        GitPullRequest pr, 
+        GitHttpClient client,
+        GitRepository repository,
+        GitPullRequest pr,
         CancellationToken cancellationToken
         )
     {
