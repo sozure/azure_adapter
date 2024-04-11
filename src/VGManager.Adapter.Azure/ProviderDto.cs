@@ -8,7 +8,8 @@ public class ProviderDto(
     IProfileAdapter profileAdapter,
     IProjectAdapter projectAdapter,
     IReleasePipelineAdapter releasePipelineAdapter,
-    IVariableGroupService variableGroupService
+    IVariableGroupService variableGroupService,
+    IPullRequestAdapter pullRequestAdapter
         )
 {
     public IBuildPipelineAdapter BuildPipelineAdapter { get; set; } = buildPipelineAdapter;
@@ -17,4 +18,5 @@ public class ProviderDto(
     public IProjectAdapter ProjectAdapter { get; set; } = projectAdapter;
     public IReleasePipelineAdapter ReleasePipelineAdapter { get; set; } = releasePipelineAdapter;
     public IVariableGroupService VariableGroupService { get; set; } = variableGroupService;
+    public IPullRequestAdapter PullRequestAdapter { get; set; } = pullRequestAdapter;
 }

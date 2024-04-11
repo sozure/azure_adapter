@@ -408,15 +408,15 @@ public class VariableGroupService(
     }
 
     private static bool IsUpdateNeeded(
-        KeyValuePair<string, VariableValue> filteredVariable, 
-        Regex? valueRegex, 
-        string? valueFilter, 
+        KeyValuePair<string, VariableValue> filteredVariable,
+        Regex? valueRegex,
+        string? valueFilter,
         string newValue
         )
     {
         var variableValue = filteredVariable.Value.Value;
 
-        if(valueRegex is not null && valueRegex.IsMatch(variableValue.ToLower()))
+        if (valueRegex is not null && valueRegex.IsMatch(variableValue.ToLower()))
         {
             filteredVariable.Value.Value = newValue;
             return true;
@@ -428,7 +428,7 @@ public class VariableGroupService(
             return true;
         }
 
-        if(valueRegex is null && valueFilter is null)
+        if (valueRegex is null && valueFilter is null)
         {
             filteredVariable.Value.Value = newValue;
             return true;
