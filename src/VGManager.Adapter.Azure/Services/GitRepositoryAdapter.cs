@@ -31,6 +31,7 @@ public class GitRepositoryAdapter(
         )
     {
         var payload = PayloadProvider<ExtendedBaseRequest>.GetPayload(command.Payload);
+
         if (payload is null)
         {
             return ResponseProvider.GetResponse(Enumerable.Empty<GitRepository>());
@@ -39,8 +40,14 @@ public class GitRepositoryAdapter(
         logger.LogInformation("Request git repositories from {project} azure project.", payload.Project);
         clientProvider.Setup(payload.Organization, payload.PAT);
         using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
+
+        var project = payload.Project;
+
         var repositories = await client.GetRepositoriesAsync(cancellationToken: cancellationToken);
-        var result = repositories.Where(repo => (!repo.IsDisabled ?? false) && repo.ProjectReference.Name == payload.Project).ToList();
+        var result = project != "All" ?
+            repositories.Where(repo => (!repo.IsDisabled ?? false) && repo.ProjectReference.Name == project).ToList() :
+            repositories.Where(repo => !repo.IsDisabled ?? false).ToList();
+
         return ResponseProvider.GetResponse(result);
     }
 
