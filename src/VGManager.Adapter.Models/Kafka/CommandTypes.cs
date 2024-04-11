@@ -33,4 +33,5 @@ public static class CommandTypes
     public const string GetPullRequestsRequest = nameof(GetPullRequestsRequest);
     public const string CreatePullRequestRequest = nameof(CreatePullRequestRequest);
     public const string CreatePullRequestsRequest = nameof(CreatePullRequestsRequest);
+    public const string ApprovePullRequestsRequest = nameof(ApprovePullRequestsRequest);
 }

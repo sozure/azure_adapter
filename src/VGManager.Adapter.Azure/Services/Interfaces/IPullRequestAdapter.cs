@@ -20,4 +20,9 @@ public interface IPullRequestAdapter
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken
         );
+
+    Task<BaseResponse<AdapterResponseModel<bool>>> ApprovePullRequestsAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken
+        );
 }

@@ -180,6 +180,66 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
         }
     }
 
+    public async Task<BaseResponse<AdapterResponseModel<bool>>> ApprovePullRequestsAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken
+        )
+    {
+        var payload = PayloadProvider<ApprovePRsRequest>.GetPayload(command.Payload);
+
+        if (payload is null)
+        {
+            return ResponseProvider.GetResponse(
+                GetFailResponse(false)
+            );
+        }
+
+        try
+        {
+            logger.LogInformation("Accept git pull requests.");
+            var organization = payload.Organization;
+
+            clientProvider.Setup(organization, payload.PAT);
+            using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
+
+            var approverId = payload.ApproverId;
+            var approverName = payload.Approver;
+
+            var reviewer = new IdentityRefWithVote
+            {
+                Id = approverId,
+                Vote = 10,
+                DisplayName = approverName,
+            };
+
+            foreach (var (repository, prId) in payload.PullRequests)
+            {
+                _ = await client.CreatePullRequestReviewerAsync(
+                    reviewer,
+                    repository,
+                    prId,
+                    approverId,
+                    cancellationToken: cancellationToken
+                    );
+            }
+
+            return ResponseProvider.GetResponse(
+                new AdapterResponseModel<bool>()
+                {
+                    Data = true,
+                    Status = AdapterStatus.Success
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error accepting git pull requests from {project} azure project.", payload.Project);
+            return ResponseProvider.GetResponse(
+                GetFailResponse(false)
+            );
+        }
+    }
+
     private static async Task<List<GitPRResponse>> CollectionPullRequests(
         string organization,
         string? payloadProject,
