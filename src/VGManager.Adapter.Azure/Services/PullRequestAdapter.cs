@@ -93,8 +93,8 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
 
             var prRequest = new GitPullRequest
             {
-                SourceRefName = payload.SourceBranch,
-                TargetRefName = payload.TargetBranch,
+                SourceRefName = $"refs/heads/{payload.SourceBranch}",
+                TargetRefName = $"refs/heads/{payload.TargetBranch}",
                 Title = payload.Title,
                 Description = "",
                 Status = PullRequestStatus.Completed
