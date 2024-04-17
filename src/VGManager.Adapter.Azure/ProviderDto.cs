@@ -5,7 +5,7 @@ namespace VGManager.Adapter.Azure;
 public class ProviderDto(
     IBuildPipelineAdapter buildPipelineAdapter,
     IKeyVaultAdapter keyVaultAdapter,
-    IProfileAdapter profileAdapter,
+    IProfileService profileService,
     IProjectAdapter projectAdapter,
     IReleasePipelineAdapter releasePipelineAdapter,
     IVariableGroupService variableGroupService,
@@ -14,7 +14,7 @@ public class ProviderDto(
 {
     public IBuildPipelineAdapter BuildPipelineAdapter { get; set; } = buildPipelineAdapter;
     public IKeyVaultAdapter KeyVaultAdapter { get; set; } = keyVaultAdapter;
-    public IProfileAdapter ProfileAdapter { get; set; } = profileAdapter;
+    public IProfileService ProfileService { get; set; } = profileService;
     public IProjectAdapter ProjectAdapter { get; set; } = projectAdapter;
     public IReleasePipelineAdapter ReleasePipelineAdapter { get; set; } = releasePipelineAdapter;
     public IVariableGroupService VariableGroupService { get; set; } = variableGroupService;

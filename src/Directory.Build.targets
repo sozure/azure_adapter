@@ -1,6 +1,6 @@
 <Project>
     <ItemGroup Condition="$(ProjectName.EndsWith('Tests'))">
-        <PackageReference Include="AutoMapper" Version="12.0.1"/>
+        <PackageReference Include="AutoMapper" Version="13.0.1"/>
         <PackageReference Include="coverlet.collector" Version="6.0.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
