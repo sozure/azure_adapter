@@ -106,11 +106,12 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
             };
 
             var pr = await client.CreatePullRequestAsync(prRequest, payload.Project, payload.Repository, cancellationToken: cancellationToken);
+            var updatedPr = EnableAutoCompleteOnAnExistingPullRequest(client, pr, "Automerged PR");
 
             return ResponseProvider.GetResponse(
                 new AdapterResponseModel<bool>()
                 {
-                    Data = pr is not null,
+                    Data = updatedPr is not null,
                     Status = AdapterStatus.Success
                 }
             );
@@ -208,42 +209,38 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
             if(profile is not null)
             {
                 var profileId = profile.Id.ToString();
-            logger.LogInformation("Accept git pull requests.");
-            var organization = payload.Organization;
+                logger.LogInformation("Accept git pull requests.");
 
                 clientProvider.Setup(organization, pat);
-            using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
+                using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
 
-            var approverId = payload.ApproverId;
-            var approverName = payload.Approver;
-
-            var reviewer = new IdentityRefWithVote
-            {
+                var reviewer = new IdentityRefWithVote
+                {
                     Id = profileId,
-                Vote = 10,
+                    Vote = 10,
                     DisplayName = profile.DisplayName
-            };
+                };
 
-            foreach (var (repository, prId) in payload.PullRequests)
-            {
-                _ = await client.CreatePullRequestReviewerAsync(
+                foreach (var (repository, prId) in payload.PullRequests)
+                {
+                    _ = await client.CreatePullRequestReviewerAsync(
                         reviewer: reviewer,
                         project: payload.Project,
                         repositoryId: repository,
                         pullRequestId: prId,
                         reviewerId: profileId,
-                    cancellationToken: cancellationToken
-                    );
-            }
-
-            return ResponseProvider.GetResponse(
-                new AdapterResponseModel<bool>()
-                {
-                    Data = true,
-                    Status = AdapterStatus.Success
+                        cancellationToken: cancellationToken
+                        );
                 }
-            );
-        }
+
+                return ResponseProvider.GetResponse(
+                    new AdapterResponseModel<bool>()
+                    {
+                        Data = true,
+                        Status = AdapterStatus.Success
+                    }
+                );
+            }
 
             logger.LogError("Error accepting git pull requests from {project} azure project.", payload.Project);
             return ResponseProvider.GetResponse(
