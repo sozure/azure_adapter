@@ -96,13 +96,21 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
             clientProvider.Setup(organization, payload.PAT);
             using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
 
+            var profile = await profileAdapter.GetProfileAsync(organization, payload.PAT, cancellationToken);
+
+            if(profile is null)
+            {
+                logger.LogError("Error getting profile during pull request creation for {repository} git repository.", payload.Repository);
+                return ResponseProvider.GetResponse(GetFailResponse(false));
+            }
+
             var prRequest = new GitPullRequest
             {
                 SourceRefName = $"refs/heads/{payload.SourceBranch}",
                 TargetRefName = $"refs/heads/{payload.TargetBranch}",
                 Title = payload.Title,
                 Description = "",
-                Status = PullRequestStatus.Completed
+                AutoCompleteSetBy = new IdentityRef { Id = profile.Id.ToString(), DisplayName = profile.DisplayName }
             };
 
             var pr = await client.CreatePullRequestAsync(prRequest, payload.Project, payload.Repository, cancellationToken: cancellationToken);
@@ -147,6 +155,14 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
             clientProvider.Setup(organization, payload.PAT);
             using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
 
+            var profile = await profileAdapter.GetProfileAsync(organization, payload.PAT, cancellationToken);
+
+            if (profile is null)
+            {
+                logger.LogError("Error getting profile during pull request creation for repositories.");
+                return ResponseProvider.GetResponse(GetFailResponse(false));
+            }
+
             foreach (var repository in payload.Repositories)
             {
                 var branches = await client.GetBranchesAsync(repository, cancellationToken: cancellationToken);
@@ -162,7 +178,7 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
                         TargetRefName = $"refs/heads/{targetBranch}",
                         Title = payload.Title,
                         Description = "",
-                        Status = PullRequestStatus.Completed
+                        AutoCompleteSetBy = new IdentityRef { Id = profile.Id.ToString(), DisplayName = profile.DisplayName }
                     };
 
                     _ = await client.CreatePullRequestAsync(prRequest, payload.Project, repository, cancellationToken: cancellationToken);
@@ -333,7 +349,7 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
         });
     }
 
-    private GitPullRequest EnableAutoCompleteOnAnExistingPullRequest(
+    private static GitPullRequest EnableAutoCompleteOnAnExistingPullRequest(
         GitHttpClient gitHttpClient, 
         GitPullRequest pullRequest, 
         string mergeCommitMessage
