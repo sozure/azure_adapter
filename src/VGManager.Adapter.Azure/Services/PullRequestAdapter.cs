@@ -96,29 +96,21 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
             clientProvider.Setup(organization, payload.PAT);
             using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
 
-            var profile = await profileAdapter.GetProfileAsync(organization, payload.PAT, cancellationToken);
-
-            if (profile is null)
-            {
-                logger.LogError("Error getting profile during pull request creation for {repository} git repository.", payload.Repository);
-                return ResponseProvider.GetResponse(GetFailResponse(false));
-            }
-
             var prRequest = new GitPullRequest
             {
                 SourceRefName = $"refs/heads/{payload.SourceBranch}",
                 TargetRefName = $"refs/heads/{payload.TargetBranch}",
                 Title = payload.Title,
-                Description = "",
-                AutoCompleteSetBy = new IdentityRef { Id = profile.Id.ToString(), DisplayName = profile.DisplayName }
+                Description = ""
             };
 
             var pr = await client.CreatePullRequestAsync(prRequest, payload.Project, payload.Repository, cancellationToken: cancellationToken);
+            var updatedPr = EnableAutoCompleteOnAnExistingPullRequest(client, pr);
 
             return ResponseProvider.GetResponse(
                 new AdapterResponseModel<bool>()
                 {
-                    Data = pr is not null,
+                    Data = updatedPr is not null,
                     Status = AdapterStatus.Success
                 }
             );
@@ -154,14 +146,6 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
             clientProvider.Setup(organization, payload.PAT);
             using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
 
-            var profile = await profileAdapter.GetProfileAsync(organization, payload.PAT, cancellationToken);
-
-            if (profile is null)
-            {
-                logger.LogError("Error getting profile during pull request creation for repositories.");
-                return ResponseProvider.GetResponse(GetFailResponse(false));
-            }
-
             foreach (var repository in payload.Repositories)
             {
                 var branches = await client.GetBranchesAsync(repository, cancellationToken: cancellationToken);
@@ -177,10 +161,10 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
                         TargetRefName = $"refs/heads/{targetBranch}",
                         Title = payload.Title,
                         Description = "",
-                        AutoCompleteSetBy = new IdentityRef { Id = profile.Id.ToString(), DisplayName = profile.DisplayName }
                     };
 
-                    _ = await client.CreatePullRequestAsync(prRequest, payload.Project, repository, cancellationToken: cancellationToken);
+                    var pr = await client.CreatePullRequestAsync(prRequest, payload.Project, repository, cancellationToken: cancellationToken);
+                    _ = EnableAutoCompleteOnAnExistingPullRequest(client, pr);
                 }
             }
 
@@ -350,19 +334,12 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
 
     private static GitPullRequest EnableAutoCompleteOnAnExistingPullRequest(
         GitHttpClient gitHttpClient,
-        GitPullRequest pullRequest,
-        string mergeCommitMessage
+        GitPullRequest pullRequest
         )
     {
         var pullRequestWithAutoCompleteEnabled = new GitPullRequest
         {
-            AutoCompleteSetBy = new IdentityRef { Id = pullRequest.CreatedBy.Id },
-            CompletionOptions = new GitPullRequestCompletionOptions
-            {
-                MergeStrategy = GitPullRequestMergeStrategy.NoFastForward,
-                DeleteSourceBranch = false,
-                MergeCommitMessage = mergeCommitMessage
-            }
+            AutoCompleteSetBy = new() { Id = pullRequest.CreatedBy.Id, DisplayName = pullRequest.CreatedBy.DisplayName }
         };
 
         var updatedPullrequest = gitHttpClient.UpdatePullRequestAsync(
