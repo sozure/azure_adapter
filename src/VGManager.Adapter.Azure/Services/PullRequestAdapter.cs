@@ -114,12 +114,11 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
             };
 
             var pr = await client.CreatePullRequestAsync(prRequest, payload.Project, payload.Repository, cancellationToken: cancellationToken);
-            var updatedPr = EnableAutoCompleteOnAnExistingPullRequest(client, pr, "Automerged PR");
 
             return ResponseProvider.GetResponse(
                 new AdapterResponseModel<bool>()
                 {
-                    Data = updatedPr is not null,
+                    Data = pr is not null,
                     Status = AdapterStatus.Success
                 }
             );
