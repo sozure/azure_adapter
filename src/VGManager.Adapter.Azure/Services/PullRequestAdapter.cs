@@ -32,8 +32,8 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
         var project = payload.Project;
         try
         {
-            var loggingMessage = project is null ? 
-                $"Request git pull requests from {project} azure project." : 
+            var loggingMessage = project is null ?
+                $"Request git pull requests from {project} azure project." :
                 $"Request git pull requests from all azure projects in {payload.Organization}.";
             logger.LogInformation(loggingMessage);
             var organization = payload.Organization;
@@ -98,7 +98,7 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
 
             var profile = await profileAdapter.GetProfileAsync(organization, payload.PAT, cancellationToken);
 
-            if(profile is null)
+            if (profile is null)
             {
                 logger.LogError("Error getting profile during pull request creation for {repository} git repository.", payload.Repository);
                 return ResponseProvider.GetResponse(GetFailResponse(false));
@@ -222,7 +222,7 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
             var pat = payload.PAT;
             var profile = await profileAdapter.GetProfileAsync(organization, pat, cancellationToken);
 
-            if(profile is not null)
+            if (profile is not null)
             {
                 var profileId = profile.Id.ToString();
                 logger.LogInformation("Accept git pull requests.");
@@ -350,8 +350,8 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
     }
 
     private static GitPullRequest EnableAutoCompleteOnAnExistingPullRequest(
-        GitHttpClient gitHttpClient, 
-        GitPullRequest pullRequest, 
+        GitHttpClient gitHttpClient,
+        GitPullRequest pullRequest,
         string mergeCommitMessage
         )
     {
