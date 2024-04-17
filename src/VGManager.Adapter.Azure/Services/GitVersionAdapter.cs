@@ -112,7 +112,7 @@ public class GitVersionAdapter(
             var gitAnnotatedTag = new GitAnnotatedTag
             {
                 Name = tag,
-                Message = string.IsNullOrEmpty(description) ? $"Release {sprint.Item2}" : $"Release {sprint.Item2}: {description}",
+                Message = string.IsNullOrEmpty(description) ? $"Release SP {sprint.Item2}" : $"Release SP {sprint.Item2}: {description}",
                 TaggedBy = new GitUserDate
                 {
                     Date = DateTime.UtcNow,

@@ -98,6 +98,7 @@ static partial class Program
         services.AddScoped<IKeyVaultAdapter, KeyVaultAdapter>();
         services.AddScoped<IHttpClientProvider, HttpClientProvider>();
         services.AddScoped<IProfileAdapter, ProfileAdapter>();
+        services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IGitRepositoryAdapter, GitRepositoryAdapter>();
         services.AddScoped<IGitVersionAdapter, GitVersionAdapter>();
         services.AddScoped<IGitFileAdapter, GitFileAdapter>();
