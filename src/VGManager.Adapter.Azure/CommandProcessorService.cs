@@ -75,7 +75,7 @@ public class CommandProcessorService(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetProfileRequest => await providerDto.ProfileAdapter.GetProfileAsync(
+                CommandTypes.GetProfileRequest => await providerDto.ProfileService.GetProfileAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),

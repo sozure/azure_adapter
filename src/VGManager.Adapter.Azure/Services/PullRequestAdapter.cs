@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
+using Microsoft.VisualStudio.Services.WebApi;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Kafka;
@@ -10,7 +11,7 @@ using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Azure.Services;
 
-public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<PullRequestAdapter> logger) :
+public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdapter profileAdapter, ILogger<PullRequestAdapter> logger) :
     IPullRequestAdapter
 {
 
@@ -28,9 +29,13 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
             );
         }
 
+        var project = payload.Project;
         try
         {
-            logger.LogInformation("Request git pull requests from {project} azure project.", payload.Project);
+            var loggingMessage = project is null ? 
+                $"Request git pull requests from {project} azure project." : 
+                $"Request git pull requests from all azure projects in {payload.Organization}.";
+            logger.LogInformation(loggingMessage);
             var organization = payload.Organization;
 
             clientProvider.Setup(organization, payload.PAT);
@@ -39,9 +44,9 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
             var repositories = await client.GetRepositoriesAsync(cancellationToken: cancellationToken);
             repositories = repositories.Where(repo => !repo.IsDisabled ?? false).ToList();
 
-            if (payload.Project is not null)
+            if (project is not null)
             {
-                repositories = repositories.Where(repo => repo.ProjectReference.Name == payload.Project).ToList();
+                repositories = repositories.Where(repo => repo.ProjectReference.Name == project).ToList();
             }
 
             var searchCriteria = new GitPullRequestSearchCriteria()
@@ -50,7 +55,7 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
                 Status = PullRequestStatus.Active
             };
 
-            var result = await CollectionPullRequests(organization, payload.Project, client, repositories, searchCriteria, cancellationToken);
+            var result = await CollectionPullRequests(organization, project, client, repositories, searchCriteria, cancellationToken);
 
             return ResponseProvider.GetResponse(
                 new AdapterResponseModel<List<GitPRResponse>>()
@@ -62,7 +67,7 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error getting git pull requests from {project} azure project.", payload?.Project ?? "Unknown");
+            logger.LogError(ex, "Error getting git pull requests from {project} azure project.", project ?? "Unknown");
             return ResponseProvider.GetResponse(
                 GetFailResponse(new List<GitPRResponse>())
                 );
@@ -196,10 +201,17 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
 
         try
         {
+            var organization = payload.Organization;
+            var pat = payload.PAT;
+            var profile = await profileAdapter.GetProfileAsync(organization, pat, cancellationToken);
+
+            if(profile is not null)
+            {
+                var profileId = profile.Id.ToString();
             logger.LogInformation("Accept git pull requests.");
             var organization = payload.Organization;
 
-            clientProvider.Setup(organization, payload.PAT);
+                clientProvider.Setup(organization, pat);
             using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
 
             var approverId = payload.ApproverId;
@@ -207,18 +219,19 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
 
             var reviewer = new IdentityRefWithVote
             {
-                Id = approverId,
+                    Id = profileId,
                 Vote = 10,
-                DisplayName = approverName,
+                    DisplayName = profile.DisplayName
             };
 
             foreach (var (repository, prId) in payload.PullRequests)
             {
                 _ = await client.CreatePullRequestReviewerAsync(
-                    reviewer,
-                    repository,
-                    prId,
-                    approverId,
+                        reviewer: reviewer,
+                        project: payload.Project,
+                        repositoryId: repository,
+                        pullRequestId: prId,
+                        reviewerId: profileId,
                     cancellationToken: cancellationToken
                     );
             }
@@ -229,6 +242,12 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
                     Data = true,
                     Status = AdapterStatus.Success
                 }
+            );
+        }
+
+            logger.LogError("Error accepting git pull requests from {project} azure project.", payload.Project);
+            return ResponseProvider.GetResponse(
+                GetFailResponse(false)
             );
         }
         catch (Exception ex)
@@ -315,6 +334,31 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, ILogger<Pull
             1 => "Yesterday",
             _ => "Today",
         });
+    }
+
+    private GitPullRequest EnableAutoCompleteOnAnExistingPullRequest(
+        GitHttpClient gitHttpClient, 
+        GitPullRequest pullRequest, 
+        string mergeCommitMessage
+        )
+    {
+        var pullRequestWithAutoCompleteEnabled = new GitPullRequest
+        {
+            AutoCompleteSetBy = new IdentityRef { Id = pullRequest.CreatedBy.Id },
+            CompletionOptions = new GitPullRequestCompletionOptions
+            {
+                MergeStrategy = GitPullRequestMergeStrategy.NoFastForward,
+                DeleteSourceBranch = false,
+                MergeCommitMessage = mergeCommitMessage
+            }
+        };
+
+        var updatedPullrequest = gitHttpClient.UpdatePullRequestAsync(
+            pullRequestWithAutoCompleteEnabled,
+            pullRequest.Repository.Id,
+            pullRequest.PullRequestId).Result;
+
+        return updatedPullrequest;
     }
 
     private static AdapterResponseModel<T> GetFailResponse<T>(T data) where T : notnull

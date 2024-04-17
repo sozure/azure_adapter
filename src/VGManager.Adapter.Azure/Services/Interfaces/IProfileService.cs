@@ -4,11 +4,10 @@ using VGManager.Adapter.Models.Response;
 
 namespace VGManager.Adapter.Azure.Services.Interfaces;
 
-public interface IProfileAdapter
+public interface IProfileService
 {
-    Task<Profile?> GetProfileAsync(
-        string organization,
-        string pat,
+    Task<BaseResponse<Profile?>> GetProfileAsync(
+        VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
 }
