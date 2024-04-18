@@ -104,13 +104,21 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
                 Description = ""
             };
 
+            GitPullRequest measuredPr = null!;
             var pr = await client.CreatePullRequestAsync(prRequest, payload.Project, payload.Repository, cancellationToken: cancellationToken);
-            var updatedPr = EnableAutoCompleteOnAnExistingPullRequest(client, pr);
+
+            if (payload.AutoComplete)
+            {
+                measuredPr = EnableAutoCompleteOnAnExistingPullRequest(client, pr);
+            } else
+            {
+                measuredPr = pr;
+            }
 
             return ResponseProvider.GetResponse(
                 new AdapterResponseModel<bool>()
                 {
-                    Data = updatedPr is not null,
+                    Data = measuredPr is not null,
                     Status = AdapterStatus.Success
                 }
             );
@@ -146,6 +154,8 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
             clientProvider.Setup(organization, payload.PAT);
             using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken: cancellationToken);
 
+            var autoComplete = payload.AutoComplete;
+
             foreach (var repository in payload.Repositories)
             {
                 var branches = await client.GetBranchesAsync(repository, cancellationToken: cancellationToken);
@@ -163,8 +173,16 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
                         Description = "",
                     };
 
-                    var pr = await client.CreatePullRequestAsync(prRequest, payload.Project, repository, cancellationToken: cancellationToken);
-                    _ = EnableAutoCompleteOnAnExistingPullRequest(client, pr);
+                    var project = payload.Project;
+                    
+                    if(autoComplete)
+                    {
+                        var pr = await client.CreatePullRequestAsync(prRequest, project, repository, cancellationToken: cancellationToken);
+                        _ = EnableAutoCompleteOnAnExistingPullRequest(client, pr);
+                    } else
+                    {
+                        _ = await client.CreatePullRequestAsync(prRequest, project, repository, cancellationToken: cancellationToken);
+                    }
                 }
             }
 
