@@ -10,4 +10,5 @@ public class GitPRResponse
     public int Days { get; set; }
     public required string Created { get; set; }
     public required string Size { get; set; }
+    public required string[] Approvers { get; set; }
 }
