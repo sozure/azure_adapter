@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
-using Microsoft.VisualStudio.Services.WebApi;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Kafka;
@@ -305,7 +304,8 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
                     Project = project,
                     Created = strAge,
                     Size = size,
-                    Days = days
+                    Days = days,
+                    Approvers = pr.Reviewers.Where(reviewer => reviewer.Vote == 10).Select(reviewer => reviewer.DisplayName).ToArray()
                 });
             }
         }
@@ -369,11 +369,9 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
     }
 
     private static AdapterResponseModel<T> GetFailResponse<T>(T data) where T : notnull
-    {
-        return new AdapterResponseModel<T>()
+    => new()
         {
             Data = data,
             Status = AdapterStatus.Unknown
         };
-    }
 }
