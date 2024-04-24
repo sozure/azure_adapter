@@ -305,7 +305,10 @@ public class PullRequestAdapter(IHttpClientProvider clientProvider, IProfileAdap
                     Created = strAge,
                     Size = size,
                     Days = days,
-                    Approvers = pr.Reviewers.Where(reviewer => reviewer.Vote == 10).Select(reviewer => reviewer.DisplayName).ToArray()
+                    Approvers = pr.Reviewers
+                        .Where(reviewer => reviewer.Vote == 10 && !reviewer.IsContainer)
+                        .Select(reviewer => reviewer.DisplayName)
+                        .ToArray()
                 });
             }
         }
