@@ -71,7 +71,7 @@ public class CommandProcessorService(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetLatestTags => await gitProviderDto.GitVersionAdapter.GetLatestTagsAsync(
+                CommandTypes.GetLatestTagsRequest => await gitProviderDto.GitVersionAdapter.GetLatestTagsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
