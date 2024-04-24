@@ -31,10 +31,6 @@ public class CommandProcessorService(
 
             result = commandMessage.CommandType switch
             {
-                CommandTypes.CreateTagRequest => await gitProviderDto.GitVersionAdapter.CreateTagAsync(
-                    vgManagerAdapterCommandMessage,
-                    cancellationToken
-                    ),
                 CommandTypes.GetBuildPipelinesRequest => await providerDto.BuildPipelineAdapter.GetBuildPipelinesAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
@@ -72,6 +68,14 @@ public class CommandProcessorService(
                     cancellationToken
                     ),
                 CommandTypes.GetTagsRequest => await gitProviderDto.GitVersionAdapter.GetTagsAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                    ),
+                CommandTypes.GetLatestTags => await gitProviderDto.GitVersionAdapter.GetLatestTagsAsync(
+                    vgManagerAdapterCommandMessage,
+                    cancellationToken
+                    ),
+                CommandTypes.CreateTagRequest => await gitProviderDto.GitVersionAdapter.CreateTagAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),

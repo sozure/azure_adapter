@@ -12,13 +12,10 @@ namespace VGManager.Adapter.Azure.Services.Helper;
 
 public static class ResponseProvider
 {
-    public static BaseResponse<AdapterStatus> GetResponse(AdapterStatus adapterStatus)
+    public static BaseResponse<AdapterStatus> GetResponse(AdapterStatus adapterStatus) => new()
     {
-        return new()
-        {
-            Data = adapterStatus
-        };
-    }
+        Data = adapterStatus
+    };
 
     public static BaseResponse<BuildDefinitionReference> GetResponse(BuildDefinitionReference result)
     => new()
@@ -110,6 +107,20 @@ public static class ResponseProvider
     }
 
     public static BaseResponse<Dictionary<string, object>> GetResponse(
+        (AdapterStatus, Dictionary<string, string>) result
+        )
+    {
+        return new()
+        {
+            Data = new Dictionary<string, object>()
+            {
+                ["Status"] = result.Item1,
+                ["Data"] = result.Item2
+            }
+        };
+    }
+
+    public static BaseResponse<Dictionary<string, object>> GetResponse(
         (string?, IEnumerable<string>) result
         )
     {
@@ -128,92 +139,65 @@ public static class ResponseProvider
         };
     }
 
-    public static BaseResponse<AdapterResponseModel<KeyVaultSecret?>> GetResponse(AdapterResponseModel<KeyVaultSecret?> result)
+    public static BaseResponse<AdapterResponseModel<KeyVaultSecret?>> GetResponse(AdapterResponseModel<KeyVaultSecret?> result) => new()
     {
-        return new()
-        {
-            Data = result
-        };
-    }
+        Data = result
+    };
 
     public static BaseResponse<AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>>> GetResponse(
         AdapterResponseModel<IEnumerable<AdapterResponseModel<KeyVaultSecret?>>> result
-        )
-    {
-        return new()
+        ) => new()
         {
             Data = result
         };
-    }
 
     public static BaseResponse<AdapterResponseModel<IEnumerable<Dictionary<string, object>>>> GetResponse(
         AdapterResponseModel<IEnumerable<Dictionary<string, object>>> result
-        )
-    {
-        return new()
+        ) => new()
         {
             Data = result
         };
-    }
 
     public static BaseResponse<AdapterResponseModel<IEnumerable<KeyVaultSecret>>> GetResponse(
         AdapterResponseModel<IEnumerable<KeyVaultSecret>> result
-        )
-    {
-        return new()
+        ) => new()
         {
             Data = result
         };
-    }
 
     public static BaseResponse<AdapterResponseModel<IEnumerable<AdapterResponseModel<SimplifiedSecretResponse?>>>> GetResponse(
         AdapterResponseModel<IEnumerable<AdapterResponseModel<SimplifiedSecretResponse?>>> result
-        )
-    {
-        return new()
+        ) => new()
         {
             Data = result
         };
-    }
 
     public static BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<T>>>> GetResponse<T>(
         AdapterResponseModel<IEnumerable<SimplifiedVGResponse<T>>> result
-        )
-    {
-        return new()
+        ) => new()
         {
             Data = result
         };
-    }
 
     public static BaseResponse<AdapterResponseModel<int>> GetResponse(
         AdapterResponseModel<int> result
-        )
-    {
-        return new()
+        ) => new()
         {
             Data = result
         };
-    }
 
     public static BaseResponse<AdapterResponseModel<List<GitPRResponse>>> GetResponse(
         AdapterResponseModel<List<GitPRResponse>> result
-        )
-    {
-        return new()
+        ) => new()
         {
             Data = result
         };
-    }
 
     public static BaseResponse<AdapterResponseModel<bool>> GetResponse(
         AdapterResponseModel<bool> result
-        )
-    {
-        return new()
+        ) => new()
         {
             Data = result
         };
-    }
 }
 

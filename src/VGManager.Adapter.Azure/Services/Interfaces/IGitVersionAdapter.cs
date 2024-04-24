@@ -13,6 +13,10 @@ public interface IGitVersionAdapter
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );
+    Task<BaseResponse<Dictionary<string, object>>> GetLatestTagsAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        );
     Task<BaseResponse<Dictionary<string, object>>> CreateTagAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default

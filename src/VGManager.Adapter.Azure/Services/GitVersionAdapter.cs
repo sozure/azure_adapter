@@ -28,12 +28,8 @@ public class GitVersionAdapter(
             {
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
             }
-
-            clientProvider.Setup(payload.Organization, payload.PAT);
-            logger.LogInformation("Request git branches from {project} git project.", payload.RepositoryId);
-            using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
-            var branches = await client.GetBranchesAsync(payload.RepositoryId, cancellationToken: cancellationToken);
-            var result = (AdapterStatus.Success, branches.Select(branch => branch.Name).ToList());
+            var branches = await GetBranchesAsync(payload.Organization, payload.PAT, payload.RepositoryId, cancellationToken);
+            var result = (AdapterStatus.Success, branches);
             return ResponseProvider.GetResponse(result);
         }
         catch (ProjectDoesNotExistWithNameException ex)
@@ -61,12 +57,8 @@ public class GitVersionAdapter(
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
             }
 
-            clientProvider.Setup(payload.Organization, payload.PAT);
-            logger.LogInformation("Request git tags from {project} git project.", payload.RepositoryId);
-            using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
-            var tags = await client.GetTagRefsAsync(payload.RepositoryId);
-
-            return ResponseProvider.GetResponse((AdapterStatus.Success, tags.Select(tag => tag.Name).ToList()));
+            var tags = await GetTagsAsync(payload.Organization, payload.PAT, payload.RepositoryId, cancellationToken);
+            return ResponseProvider.GetResponse((AdapterStatus.Success, tags));
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
@@ -98,7 +90,7 @@ public class GitVersionAdapter(
             var tag = payload.TagName;
             var description = payload.Description;
             clientProvider.Setup(payload.Organization, payload.PAT);
-            logger.LogInformation("Request git tags from {project} git project.", repositoryId);
+            logger.LogInformation("Create git tag for {project} git project.", repositoryId);
             using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
 
             var sprint = await sprintAdapter.GetCurrentSprintAsync(payload.Project, cancellationToken);
@@ -135,8 +127,101 @@ public class GitVersionAdapter(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error getting git tags from {project} git project.", payload?.RepositoryId);
+            logger.LogError(ex, "Error creating git tag for {project} git project.", payload?.RepositoryId);
             return ResponseProvider.GetResponse((AdapterStatus.Unknown, string.Empty));
+        }
+    }
+
+    public async Task<BaseResponse<Dictionary<string, object>>> GetLatestTagsAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        )
+    {
+        var payload = PayloadProvider<GitLatestTagsRequest>.GetPayload(command.Payload);
+        try
+        {
+            if (payload is null)
+            {
+                return ResponseProvider.GetResponse((AdapterStatus.Unknown, new Dictionary<string, string>()));
+            }
+
+            var result = new Dictionary<string, string>();
+
+            foreach(var repositoryId in payload.RepositoryIds)
+            {
+                var tags = await GetTagsAsync(payload.Organization, payload.PAT, repositoryId, cancellationToken);
+                tags.Sort(new VersionComparer());
+                var latestTag = tags.LastOrDefault();
+                if (latestTag is not null)
+                {
+                    result.Add(repositoryId.ToString(), latestTag);
+                }
+            }
+
+            return ResponseProvider.GetResponse((AdapterStatus.Success, result));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting latest tags.");
+            return ResponseProvider.GetResponse((AdapterStatus.Unknown, new Dictionary<string, string>()));
+        }
+    }
+
+    private async Task<IEnumerable<string>> GetBranchesAsync(
+        string organization, 
+        string pat, 
+        string repositoryId, 
+        CancellationToken cancellationToken
+        )
+    {
+        clientProvider.Setup(organization, pat);
+        logger.LogInformation("Request git branches from {project} git project.", repositoryId);
+        using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
+        var branches = await client.GetBranchesAsync(repositoryId, cancellationToken: cancellationToken);
+        return branches.Select(branch => branch.Name).ToList();
+    }
+
+    private async Task<List<string>> GetTagsAsync(
+        string organization,
+        string pat,
+        Guid repositoryId,
+        CancellationToken cancellationToken
+        )
+    {
+        clientProvider.Setup(organization, pat);
+        logger.LogInformation("Request git tags from {project} git project.", repositoryId);
+        using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
+        var tags = await client.GetTagRefsAsync(repositoryId);
+        return tags.Select(tag => tag.Name).ToList();
+    }
+
+    public class VersionComparer: IComparer<string>
+    {
+        public int Compare(string? x, string? y)
+        {
+            if (x is null && y is null)
+            {
+                return 0;
+            }
+            else if (x is null)
+            {
+                return -1;
+            }
+            else if (y is null)
+            {
+                return 1;
+            }
+
+            var versionX = ParseVersion(x);
+            var versionY = ParseVersion(y);
+
+            return versionX.CompareTo(versionY);
+        }
+
+        private static Version ParseVersion(string versionString)
+        {
+            var versionNumber = versionString[(versionString.LastIndexOf('/') + 1)..];
+            return new Version(versionNumber);
         }
     }
 }
