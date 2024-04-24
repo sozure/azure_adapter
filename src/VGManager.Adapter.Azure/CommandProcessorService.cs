@@ -87,6 +87,11 @@ public class CommandProcessorService(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
+                CommandTypes.GetEnvironmentsFromMultipleProjectsRequest => await providerDto.ReleasePipelineAdapter
+                    .GetEnvironmentsFromMultipleProjectsAsync(
+                        vgManagerAdapterCommandMessage,
+                        cancellationToken
+                    ),
                 CommandTypes.GetVariableGroupsRequest => await providerDto.ReleasePipelineAdapter.GetVariableGroupsAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken

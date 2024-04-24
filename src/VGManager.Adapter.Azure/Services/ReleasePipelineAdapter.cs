@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.VisualStudio.Services.Common;
@@ -38,28 +37,16 @@ public class ReleasePipelineAdapter(
                 return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
             }
 
-            var project = payload.Project;
-            var repositoryName = payload.RepositoryName;
+            (var definition, var result) = await GetEnvironmentsAsync(
+                payload.Organization,
+                payload.PAT,
+                payload.Project,
+                payload.RepositoryName,
+                payload.ConfigFile,
+                cancellationToken
+                );
 
-            logger.LogInformation("Request environments for {repository} git repository from {project} azure project.", repositoryName, project);
-            var definition = await GetReleaseDefinitionAsync(payload.Organization, payload.PAT, project, repositoryName, payload.ConfigFile, cancellationToken);
-            var rawResult = definition?.Environments.Select(env => env.Name).ToList() ?? Enumerable.Empty<string>();
-            var result = new List<string>();
-
-            foreach (var rawElement in rawResult)
-            {
-                var element = Settings.Replacable.Where(rawElement.Contains).Select(replace => rawElement.Replace(replace, string.Empty));
-                if (!element.Any())
-                {
-                    element = new[] { rawElement };
-                }
-                result.AddRange(element.Where(element => !Settings.ExcludableEnvironments.Contains(element)));
-            }
-
-            return ResponseProvider.GetResponse((
-                definition is null ? AdapterStatus.Unknown : AdapterStatus.Success,
-                result
-                ));
+            return ResponseProvider.GetResponse((definition is null ? AdapterStatus.Unknown : AdapterStatus.Success, result));
         }
         catch (ProjectDoesNotExistWithNameException ex)
         {
@@ -69,6 +56,52 @@ public class ReleasePipelineAdapter(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting git branches from {project} azure project.", payload?.Project ?? "Unknown");
+            return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
+        }
+    }
+
+    public async Task<BaseResponse<Dictionary<string, object>>> GetEnvironmentsFromMultipleProjectsAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        )
+    {
+        var payload = PayloadProvider<MultipleReleasePipelineRequest>.GetPayload(command.Payload);
+        try
+        {
+            if (payload is null)
+            {
+                return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
+            }
+
+            var result = new List<string>();
+
+            foreach (var project in payload.Projects)
+            {
+                (_, var subResult) = await GetEnvironmentsAsync(
+                    payload.Organization,
+                    payload.PAT, 
+                    project,
+                    payload.RepositoryName,
+                    payload.ConfigFile,
+                    cancellationToken
+                    );
+
+                if (subResult.Any())
+                {
+                    result.Add(project);
+                }
+            }
+
+            return ResponseProvider.GetResponse((AdapterStatus.Success, result));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex, 
+                "Error getting environments from azure projecs in {organization} organization.", 
+                payload?.Organization ?? "Unknown"
+                );
+
             return ResponseProvider.GetResponse((AdapterStatus.Unknown, Enumerable.Empty<string>()));
         }
     }
@@ -155,65 +188,67 @@ public class ReleasePipelineAdapter(
     {
         clientProvider.Setup(organization, pat);
         using var releaseClient = await clientProvider.GetClientAsync<ReleaseHttpClient>(cancellationToken);
-        using var buildClient = await clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
         var expand = ReleaseDefinitionExpands.Artifacts;
-        var result = await buildClient.GetDefinitionsAsync(project, cancellationToken: cancellationToken);
+        var releaseDefinitions = await releaseClient.GetReleaseDefinitionsAsync(project, expand: expand, cancellationToken: cancellationToken);
 
-        var foundDefinitions = new List<ReleaseDefinition>();
+        var filteredReleaseDefinitions = releaseDefinitions.Where(
+                releaseDef => releaseDef.Artifacts.Any(
+                    artifact => artifact.DefinitionReference.GetValueOrDefault("definition")?.Name == repositoryName
+                    )
+            );
 
-        foreach (var def in result)
+        foreach(var releaseDef in filteredReleaseDefinitions)
         {
-            if (def.Name == repositoryName)
-            {
-                var results = await releaseClient.GetReleaseDefinitionsAsync(project, expand: expand, cancellationToken: cancellationToken);
-                var res = results.Find(
-                    x => x.Artifacts.Any(artifact => artifact.DefinitionReference.GetValueOrDefault("definition")?.Id == def.Id.ToString())
-                    );
-                if (res is not null)
-                {
-                    foundDefinitions.Add(res);
-                }
-            }
-        }
-
-        if (foundDefinitions.Count == 0)
-        {
-            var releaseDefinitions = await releaseClient.GetReleaseDefinitionsAsync(
+            var detailedReleaseDef = await releaseClient.GetReleaseDefinitionAsync(
                 project,
-                expand: expand,
+                definitionId: releaseDef.Id,
                 cancellationToken: cancellationToken
                 );
 
-            foundDefinitions = releaseDefinitions.Where(
-                definition => definition.Artifacts.Any(artifact =>
-                {
-                    var artifactType = artifact.DefinitionReference.GetValueOrDefault("definition")?.Name;
-                    return artifactType?.Equals(repositoryName) ?? false;
-                })
-                ).ToList();
-        }
-
-        ReleaseDefinition? definition = null!;
-
-        foreach (var def in foundDefinitions)
-        {
-            var subResult = await releaseClient.GetReleaseDefinitionAsync(project, def?.Id ?? 0, cancellationToken: cancellationToken);
-
-            var workFlowTasks = subResult?.Environments.FirstOrDefault()?.DeployPhases.FirstOrDefault()?.WorkflowTasks.ToList() ??
+            var workFlowTasks = detailedReleaseDef?.Environments.FirstOrDefault()?.DeployPhases.FirstOrDefault()?.WorkflowTasks.ToList() ??
                 Enumerable.Empty<WorkflowTask>();
 
-            foreach (var task in workFlowTasks.Select(x => x.Inputs))
+            var filteredWorkFlowTasks = workFlowTasks.Select(x => x.Inputs);
+            foreach (var task in filteredWorkFlowTasks)
             {
                 task.TryGetValue("configuration", out var configValue);
                 task.TryGetValue("command", out var command);
 
                 if ((configValue?.Contains(configFile) ?? false) && command == "apply")
                 {
-                    definition = subResult;
+                    return detailedReleaseDef;
                 }
             }
         }
 
-        return definition;
+        return null!;
+    }
+
+    private async Task<(ReleaseDefinition?, IEnumerable<string>)> GetEnvironmentsAsync(
+        string organization,
+        string pat,
+        string project,
+        string repositoryName,
+        string configFile,
+        CancellationToken cancellationToken
+        )
+    {
+        logger.LogInformation("Request environments for {repository} git repository from {project} azure project.", repositoryName, project);
+        var definition = await GetReleaseDefinitionAsync(organization, pat, project, repositoryName, configFile, cancellationToken);
+
+        var rawResult = definition?.Environments.Select(env => env.Name).ToList() ?? Enumerable.Empty<string>();
+        var result = new List<string>();
+
+        foreach (var rawElement in rawResult)
+        {
+            var element = Settings.Replacable.Where(rawElement.Contains).Select(replace => rawElement.Replace(replace, string.Empty));
+            if (!element.Any())
+            {
+                element = new[] { rawElement };
+            }
+            result.AddRange(element.Where(element => !Settings.ExcludableEnvironments.Contains(element)));
+        }
+
+        return (definition, result);
     }
 }
