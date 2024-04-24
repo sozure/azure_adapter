@@ -29,7 +29,7 @@ public class BuildPipelineAdapter(IHttpClientProvider clientProvider, ILogger<Bu
         return ResponseProvider.GetResponse(result);
     }
 
-    public async Task<BaseResponse<BuildDefinitionReference>> GetBuildPipelineAsync(
+    public async Task<BaseResponse<string>> GetRepositoryIdByBuildPipelineAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         )
@@ -44,7 +44,7 @@ public class BuildPipelineAdapter(IHttpClientProvider clientProvider, ILogger<Bu
         clientProvider.Setup(payload.Organization, payload.PAT);
         using var client = await clientProvider.GetClientAsync<BuildHttpClient>(cancellationToken);
         var result = await client.GetDefinitionAsync(payload.Project, payload.Id, cancellationToken: cancellationToken);
-        return ResponseProvider.GetResponse(result);
+        return ResponseProvider.GetResponse(result.Repository.Id);
     }
 
     public async Task<BaseResponse<AdapterStatus>> RunBuildPipelineAsync(

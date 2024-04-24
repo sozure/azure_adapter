@@ -4,7 +4,7 @@ public static class CommandTypes
 {
     public const string GetBuildPipelinesRequest = nameof(GetBuildPipelinesRequest);
     public const string RunBuildPipelinesRequest = nameof(RunBuildPipelinesRequest);
-    public const string GetBuildPipelineRequest = nameof(GetBuildPipelineRequest);
+    public const string GetRepositoryIdByBuildPipelineRequest = nameof(GetRepositoryIdByBuildPipelineRequest);
     public const string RunBuildPipelineRequest = nameof(RunBuildPipelineRequest);
     public const string GetFilePathRequest = nameof(GetFilePathRequest);
     public const string GetConfigFilesRequest = nameof(GetConfigFilesRequest);

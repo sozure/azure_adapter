@@ -7,7 +7,7 @@ namespace VGManager.Adapter.Azure.Services.Interfaces;
 
 public interface IBuildPipelineAdapter
 {
-    Task<BaseResponse<BuildDefinitionReference>> GetBuildPipelineAsync(
+    Task<BaseResponse<string>> GetRepositoryIdByBuildPipelineAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
         );

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
+using System.Text.RegularExpressions;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Kafka;
@@ -146,15 +147,17 @@ public class GitVersionAdapter(
             }
 
             var result = new Dictionary<string, string>();
+            var regex = new Regex(@"^refs/tags/\d+\.\d+\.\d+$");
 
-            foreach(var repositoryId in payload.RepositoryIds)
+            foreach (var repositoryId in payload.RepositoryIds)
             {
                 var tags = await GetTagsAsync(payload.Organization, payload.PAT, repositoryId, cancellationToken);
-                tags.Sort(new VersionComparer());
-                var latestTag = tags.LastOrDefault();
+                var filteredTags = tags.Where(tag => regex.IsMatch(tag)).ToList();
+                filteredTags.Sort(new VersionComparer());
+                var latestTag = filteredTags.LastOrDefault();
                 if (latestTag is not null)
                 {
-                    result.Add(repositoryId.ToString(), latestTag);
+                    result.Add(repositoryId.ToString(), latestTag.Replace("refs/tags/", string.Empty));
                 }
             }
 
