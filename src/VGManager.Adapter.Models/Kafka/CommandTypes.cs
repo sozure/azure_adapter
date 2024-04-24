@@ -15,6 +15,7 @@ public static class CommandTypes
     public const string CreateTagRequest = nameof(CreateTagRequest);
     public const string GetProfileRequest = nameof(GetProfileRequest);
     public const string GetEnvironmentsRequest = nameof(GetEnvironmentsRequest);
+    public const string GetEnvironmentsFromMultipleProjectsRequest = nameof(GetEnvironmentsFromMultipleProjectsRequest);
     public const string GetVariableGroupsRequest = nameof(GetVariableGroupsRequest);
     public const string GetProjectsRequest = nameof(GetProjectsRequest);
     public const string GetAllVGRequest = nameof(GetAllVGRequest);

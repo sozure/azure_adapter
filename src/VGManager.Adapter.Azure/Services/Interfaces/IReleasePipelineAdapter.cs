@@ -10,6 +10,11 @@ public interface IReleasePipelineAdapter
         CancellationToken cancellationToken = default
         );
 
+    Task<BaseResponse<Dictionary<string, object>>> GetEnvironmentsFromMultipleProjectsAsync(
+        VGManagerAdapterCommand command,
+        CancellationToken cancellationToken = default
+        );
+
     Task<BaseResponse<Dictionary<string, object>>> GetVariableGroupsAsync(
         VGManagerAdapterCommand command,
         CancellationToken cancellationToken = default
