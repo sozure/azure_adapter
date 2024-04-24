@@ -39,7 +39,7 @@ public class CommandProcessorService(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),
-                CommandTypes.GetBuildPipelineRequest => await providerDto.BuildPipelineAdapter.GetBuildPipelineAsync(
+                CommandTypes.GetRepositoryIdByBuildPipelineRequest => await providerDto.BuildPipelineAdapter.GetRepositoryIdByBuildPipelineAsync(
                     vgManagerAdapterCommandMessage,
                     cancellationToken
                     ),

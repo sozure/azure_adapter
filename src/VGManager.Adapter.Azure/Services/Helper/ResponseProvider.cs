@@ -17,7 +17,13 @@ public static class ResponseProvider
         Data = adapterStatus
     };
 
-    public static BaseResponse<BuildDefinitionReference> GetResponse(BuildDefinitionReference result)
+    public static BaseResponse<BuildDefinition> GetResponse(BuildDefinition result)
+    => new()
+    {
+        Data = result
+    };
+
+    public static BaseResponse<string> GetResponse(string result)
     => new()
     {
         Data = result
