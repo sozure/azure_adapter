@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
+using Microsoft.VisualStudio.Services.WebApi;
 using System.Text.RegularExpressions;
 using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
@@ -37,6 +38,11 @@ public class GitVersionAdapter(
         {
             logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId ?? "Unknown");
             return ResponseProvider.GetResponse((AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>()));
+        }
+        catch(VssServiceResponseException ex)
+        {
+            logger.LogError(ex, "Error getting git branches from {project} git project.", payload?.RepositoryId ?? "Unknown");
+            return ResponseProvider.GetResponse((AdapterStatus.BranchesDoNotExist, Enumerable.Empty<string>()));
         }
         catch (Exception ex)
         {
