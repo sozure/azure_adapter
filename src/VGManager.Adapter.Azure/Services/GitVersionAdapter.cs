@@ -108,10 +108,12 @@ public class GitVersionAdapter(
                 cancellationToken: cancellationToken
                 );
 
+            var sprintNumber = sprint.Item2.ToLower();
+
             var gitAnnotatedTag = new GitAnnotatedTag
             {
                 Name = tag,
-                Message = string.IsNullOrEmpty(description) ? $"Release SP {sprint.Item2}" : $"Release SP {sprint.Item2}: {description}",
+                Message = string.IsNullOrEmpty(description) ? $"Release {sprintNumber}" : $"Release {sprintNumber}: {description}",
                 TaggedBy = new GitUserDate
                 {
                     Date = DateTime.UtcNow,

@@ -16,26 +16,8 @@ public class SprintAdapter(IHttpClientProvider clientProvider, ILogger<SprintAda
         {
             logger.LogInformation("Request current sprint from {project} project.", project);
             using var workHttpClient = await clientProvider.GetClientAsync<WorkHttpClient>(cancellationToken);
-            using var projectClient = await clientProvider.GetClientAsync<ProjectHttpClient>(cancellationToken);
-            using var teamClient = await clientProvider.GetClientAsync<TeamHttpClient>(cancellationToken);
 
-            var projects = await projectClient.GetProjects();
-            var foundProject = projects.FirstOrDefault(x => x.Name == project);
-
-            if (foundProject is null)
-            {
-                return (AdapterStatus.Unknown, string.Empty);
-            }
-
-            var teams = await teamClient.GetTeamsAsync(foundProject.Id.ToString(), cancellationToken: cancellationToken);
-            var team = teams.FirstOrDefault();
-
-            if (team is null)
-            {
-                return (AdapterStatus.Unknown, string.Empty);
-            }
-
-            var result = await workHttpClient.GetTeamSettingsAsync(new(project, team.Name), cancellationToken: cancellationToken);
+            var result = await workHttpClient.GetTeamSettingsAsync(new(project), cancellationToken: cancellationToken);
             var sprintName = result.DefaultIteration.Name;
 
             if (!int.TryParse(_regex.Matches(sprintName)[0].Groups[1].Value, out var number))
@@ -43,7 +25,7 @@ public class SprintAdapter(IHttpClientProvider clientProvider, ILogger<SprintAda
                 return (AdapterStatus.Unknown, string.Empty);
             }
 
-            return (AdapterStatus.Success, number.ToString());
+            return (AdapterStatus.Success, sprintName);
         }
         catch (Exception ex)
         {
