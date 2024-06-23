@@ -3,7 +3,7 @@ using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Models.Models;
 
-public class AdapterResponseModel<T>
+public record AdapterResponseModel<T>
 {
     [Required]
     public AdapterStatus Status { get; set; }
@@ -12,7 +12,7 @@ public class AdapterResponseModel<T>
     public T Data { get; set; } = default!;
 }
 
-public class AdapterResponseModel<T, K>
+public record AdapterResponseModel<T, K>
 {
     [Required]
     public AdapterStatus Status { get; set; }

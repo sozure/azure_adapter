@@ -1,9 +1,6 @@
-using Microsoft.Azure.Pipelines.WebApi;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
-using System.Threading;
 using VGManager.Adapter.Azure.Adapters.Interfaces;
-using VGManager.Adapter.Azure.Services;
 using VGManager.Adapter.Azure.Services.Interfaces;
 
 namespace VGManager.Adapter.Azure.Adapters;
@@ -11,20 +8,20 @@ namespace VGManager.Adapter.Azure.Adapters;
 public class GitRepositoryAdapter(
     IHttpClientProvider clientProvider,
     ILogger<GitRepositoryAdapter> logger
-    ): IGitRepositoryAdapter
+    ) : IGitRepositoryAdapter
 {
     public async Task<List<GitRepository>> GetAllAsync(
-        string organization, 
-        string pat, 
-        string? project, 
+        string organization,
+        string pat,
+        string? project,
         CancellationToken cancellationToken = default
         )
     {
         logger.LogInformation("Request git repositories from {project} azure project.", project);
         clientProvider.Setup(organization, pat);
         using var client = await clientProvider.GetClientAsync<GitHttpClient>(cancellationToken);
-        return project is null || project == "All" ? 
-            await client.GetRepositoriesAsync(cancellationToken: cancellationToken) : 
+        return project is null || project == "All" ?
+            await client.GetRepositoriesAsync(cancellationToken: cancellationToken) :
             await client.GetRepositoriesAsync(project: project, cancellationToken: cancellationToken);
     }
 
@@ -42,12 +39,12 @@ public class GitRepositoryAdapter(
     }
 
     public async Task<Stream> GetItemTextAsync(
-        string organization, 
-        string pat, 
-        string project, 
+        string organization,
+        string pat,
+        string project,
         string repositoryId,
-        string branch, 
-        string filePath, 
+        string branch,
+        string filePath,
         CancellationToken cancellationToken = default
         )
     {

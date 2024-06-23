@@ -40,7 +40,7 @@ public class GitVersionService(
             logger.LogError(ex, "{project} git project is not found.", payload?.RepositoryId ?? "Unknown");
             return ResponseProvider.GetResponse((AdapterStatus.ProjectDoesNotExist, Enumerable.Empty<string>()));
         }
-        catch(VssServiceResponseException ex)
+        catch (VssServiceResponseException ex)
         {
             logger.LogError(ex, "Error getting git branches from {project} git project.", payload?.RepositoryId ?? "Unknown");
             return ResponseProvider.GetResponse((AdapterStatus.BranchesDoNotExist, Enumerable.Empty<string>()));
@@ -180,9 +180,9 @@ public class GitVersionService(
     }
 
     private async Task<IEnumerable<string>> GetBranchesAsync(
-        string organization, 
-        string pat, 
-        string repositoryId, 
+        string organization,
+        string pat,
+        string repositoryId,
         CancellationToken cancellationToken
         )
     {
@@ -207,7 +207,7 @@ public class GitVersionService(
         return tags.Select(tag => tag.Name).ToList();
     }
 
-    public class VersionComparer: IComparer<string>
+    public class VersionComparer : IComparer<string>
     {
         public int Compare(string? x, string? y)
         {

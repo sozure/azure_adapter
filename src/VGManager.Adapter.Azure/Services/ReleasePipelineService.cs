@@ -79,7 +79,7 @@ public class ReleasePipelineService(
             {
                 (_, var subResult) = await GetEnvironmentsAsync(
                     payload.Organization,
-                    payload.PAT, 
+                    payload.PAT,
                     project,
                     payload.RepositoryName,
                     payload.ConfigFile,
@@ -97,8 +97,8 @@ public class ReleasePipelineService(
         catch (Exception ex)
         {
             logger.LogError(
-                ex, 
-                "Error getting environments from azure projecs in {organization} organization.", 
+                ex,
+                "Error getting environments from azure projecs in {organization} organization.",
                 payload?.Organization ?? "Unknown"
                 );
 
@@ -197,7 +197,7 @@ public class ReleasePipelineService(
                     )
             );
 
-        foreach(var releaseDef in filteredReleaseDefinitions)
+        foreach (var releaseDef in filteredReleaseDefinitions)
         {
             var detailedReleaseDef = await releaseClient.GetReleaseDefinitionAsync(
                 project,

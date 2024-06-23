@@ -1,6 +1,6 @@
 namespace VGManager.Adapter.Models.Requests;
 
-public class CreatePRsRequest : GitPRRequest
+public record CreatePRsRequest : GitPRRequest
 {
     public bool AutoComplete { get; set; }
     public bool ForceComplete { get; set; }

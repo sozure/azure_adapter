@@ -141,7 +141,7 @@ public class ProjectService(ILogger<ProjectService> logger) : IProjectService
         };
     }
 
-    private static AdapterResponseModel<IEnumerable<ProjectRequest>> GetResult(AdapterStatus status) 
+    private static AdapterResponseModel<IEnumerable<ProjectRequest>> GetResult(AdapterStatus status)
         => new()
         {
             Status = status,

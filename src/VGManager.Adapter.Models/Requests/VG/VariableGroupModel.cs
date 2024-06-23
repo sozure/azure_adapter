@@ -1,6 +1,6 @@
 namespace VGManager.Adapter.Models.Requests.VG;
 
-public class VariableGroupModel : BaseModel
+public record VariableGroupModel : BaseModel
 {
     public string UserName { get; set; } = null!;
 

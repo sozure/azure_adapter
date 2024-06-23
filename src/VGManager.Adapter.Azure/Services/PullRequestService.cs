@@ -116,7 +116,7 @@ public class PullRequestService(
                 pat,
                 payload.Project!,
                 repository,
-                prRequest, 
+                prRequest,
                 cancellationToken
                 );
 
@@ -165,9 +165,9 @@ public class PullRequestService(
             foreach (var repositoryId in payload.Repositories)
             {
                 var branches = await pullRequestAdapter.GetBranchesAsync(
-                    organization, 
-                    pat, 
-                    repositoryId, 
+                    organization,
+                    pat,
+                    repositoryId,
                     cancellationToken
                     );
 
@@ -187,11 +187,11 @@ public class PullRequestService(
                     var project = payload.Project;
                     var repository = await gitRepositoryAdapter.GetAsync(organization, pat, repositoryId, cancellationToken);
                     var pr = await pullRequestAdapter.CreatePullRequestAsync(
-                        organization, 
-                        pat, 
-                        project!, 
-                        repositoryId, 
-                        prRequest, 
+                        organization,
+                        pat,
+                        project!,
+                        repositoryId,
+                        prRequest,
                         cancellationToken
                         );
 
@@ -202,11 +202,11 @@ public class PullRequestService(
                     else if (payload.ForceComplete)
                     {
                         _ = await CompletePullRequestAsync(
-                            organization, 
-                            pat, 
-                            project!, 
-                            repository.Id.ToString(), 
-                            foundTargetBranch, 
+                            organization,
+                            pat,
+                            project!,
+                            repository.Id.ToString(),
+                            foundTargetBranch,
                             pr, cancellationToken
                             );
                     }
@@ -235,7 +235,7 @@ public class PullRequestService(
         string pat,
         string? payloadProject,
         List<GitRepository> repositories,
-        GitPullRequestSearchCriteria searchCriteria, 
+        GitPullRequestSearchCriteria searchCriteria,
         CancellationToken cancellationToken
         )
     {
@@ -326,10 +326,10 @@ public class PullRequestService(
     {
         var pullRequestWithAutoCompleteEnabled = new GitPullRequest
         {
-            AutoCompleteSetBy = new() 
-            { 
-                Id = pullRequest.CreatedBy.Id, 
-                DisplayName = pullRequest.CreatedBy.DisplayName 
+            AutoCompleteSetBy = new()
+            {
+                Id = pullRequest.CreatedBy.Id,
+                DisplayName = pullRequest.CreatedBy.DisplayName
             }
         };
 
@@ -359,7 +359,8 @@ public class PullRequestService(
             await Task.Delay(2000, cancellationToken);
             await ToggleBranchPoliciesAsync(organization, pat, project!, repository, targetBranch, true, cancellationToken);
             return updatedPr;
-        } catch(Exception ex)
+        }
+        catch (Exception ex)
         {
             logger.LogError(ex, "Error during PR {prId} complete in {repository} repository.", pullRequest.PullRequestId, repository);
             _ = await workItemAdapter.CreateWorkItemAsync(organization, pat, project, repository, pullRequest, cancellationToken);
@@ -370,8 +371,8 @@ public class PullRequestService(
     private async Task ToggleBranchPoliciesAsync(
         string organization,
         string pat,
-        string project, 
-        string repositoryId, 
+        string project,
+        string repositoryId,
         string targetBranch,
         bool policyEnabled,
         CancellationToken cancellationToken
@@ -380,25 +381,25 @@ public class PullRequestService(
         var policies = await pullRequestAdapter.GetPolicyConfigurationsAsync(
             organization,
             pat,
-            project, 
+            project,
             cancellationToken
             );
 
-        foreach(var policy in policies)
+        foreach (var policy in policies)
         {
             var scopes = policy.Settings.GetValue("scope") as JArray;
             var scope = scopes?.FirstOrDefault() as JObject;
             var branch = scope?.Value<string>("refName") ?? string.Empty;
             var foundRepositoryId = scope?.Value<string>("repositoryId") ?? string.Empty;
 
-            if(repositoryId == foundRepositoryId && branch == $"refs/heads/{targetBranch}")
+            if (repositoryId == foundRepositoryId && branch == $"refs/heads/{targetBranch}")
             {
                 policy.IsEnabled = policyEnabled;
                 await pullRequestAdapter.UpdatePolicyConfigurationAsync(
-                    organization, 
-                    pat, 
-                    project, 
-                    policy, 
+                    organization,
+                    pat,
+                    project,
+                    policy,
                     cancellationToken
                 );
             }
@@ -407,8 +408,8 @@ public class PullRequestService(
 
     private static AdapterResponseModel<T> GetFailResponse<T>(T data) where T : notnull
     => new()
-        {
-            Data = data,
-            Status = AdapterStatus.Unknown
-        };
+    {
+        Data = data,
+        Status = AdapterStatus.Unknown
+    };
 }

@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.Work.WebApi;
 using System.Text.RegularExpressions;
 using VGManager.Adapter.Azure.Adapters.Interfaces;
