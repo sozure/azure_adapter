@@ -1,6 +1,6 @@
 namespace VGManager.Adapter.Models.Requests;
 
-public class BaseSecretRequest
+public record BaseSecretRequest
 {
     public string TenantId { get; set; } = null!;
     public string ClientId { get; set; } = null!;

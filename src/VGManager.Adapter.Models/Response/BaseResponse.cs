@@ -1,6 +1,6 @@
 namespace VGManager.Adapter.Models.Response;
 
-public class BaseResponse<T>
+public record BaseResponse<T>
 {
     public T Data { get; set; } = default!;
 }

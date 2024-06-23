@@ -1,6 +1,6 @@
 namespace VGManager.Adapter.Models.Requests;
 
-public class GetBuildPipelineRequest : ExtendedBaseRequest
+public record GetBuildPipelineRequest : ExtendedBaseRequest
 {
     public int Id { get; set; }
 }
