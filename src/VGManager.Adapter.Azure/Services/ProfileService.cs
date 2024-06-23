@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.Profile;
-using VGManager.Adapter.Azure.Services.Helper;
+using VGManager.Adapter.Azure.Adapters;
+using VGManager.Adapter.Azure.Adapters.Interfaces;
+using VGManager.Adapter.Azure.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Adapter.Models.Requests;
