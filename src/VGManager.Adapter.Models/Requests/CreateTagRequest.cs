@@ -1,6 +1,6 @@
 namespace VGManager.Adapter.Models.Requests;
 
-public class CreateTagRequest : ExtendedBaseRequest
+public record CreateTagRequest : ExtendedBaseRequest
 {
     public Guid RepositoryId { get; set; }
     public string TagName { get; set; } = null!;

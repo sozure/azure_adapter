@@ -1,6 +1,6 @@
 namespace VGManager.Adapter.Models.Requests.VG;
 
-public class VariableGroupAddModel : VariableGroupModel
+public record VariableGroupAddModel : VariableGroupModel
 {
     public string Key { get; set; } = null!;
 

@@ -3,7 +3,7 @@ using VGManager.Adapter.Models.StatusEnums;
 
 namespace VGManager.Adapter.Models.Models;
 
-public class RepositoryResponseModel<T>
+public record RepositoryResponseModel<T>
 {
     [Required]
     public RepositoryStatus Status { get; set; }

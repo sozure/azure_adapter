@@ -1,6 +1,6 @@
 namespace VGManager.Adapter.Models.Response;
 
-public class SimplifiedVGResponse<T>
+public record SimplifiedVGResponse<T>
 {
     public string Name { get; set; } = null!;
     public string Type { get; set; } = null!;

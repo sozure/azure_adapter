@@ -4,10 +4,11 @@ using System.Reflection;
 using VGManager.Adapter.Api.BackgroundServices;
 using VGManager.Adapter.Api.HealthChecks;
 using VGManager.Adapter.Azure;
+using VGManager.Adapter.Azure.Adapters;
+using VGManager.Adapter.Azure.Adapters.Interfaces;
+using VGManager.Adapter.Azure.Helper;
 using VGManager.Adapter.Azure.Services;
-using VGManager.Adapter.Azure.Services.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
-using VGManager.Adapter.Azure.Services.VG;
 using VGManager.Adapter.Azure.Settings;
 using VGManager.Adapter.Interfaces;
 using VGManager.Adapter.Models.Kafka;
@@ -61,7 +62,7 @@ static partial class Program
             typeof(CommandMessageProfile)
         );
 
-        services.AddOptions<GitRepositoryAdapterSettings>()
+        services.AddOptions<GitRepositoryServiceSettings>()
             .Bind(configuration.GetSection(Constants.SettingKeys.GitRepositoryAdapterSettings))
             .ValidateDataAnnotations()
             .ValidateOnStart();
@@ -92,20 +93,23 @@ static partial class Program
         services.AddScoped<ICommandProcessorService, CommandProcessorService>();
 
         services.AddScoped<IVariableGroupAdapter, VariableGroupAdapter>();
+        services.AddScoped<IGitRepositoryAdapter, GitRepositoryAdapter>();
+        services.AddScoped<IPullRequestAdapter, PullRequestAdapter>();
         services.AddScoped<IVariableFilterService, VariableFilterService>();
         services.AddScoped<IVariableGroupService, VariableGroupService>();
-        services.AddScoped<IProjectAdapter, ProjectAdapter>();
-        services.AddScoped<IKeyVaultAdapter, KeyVaultAdapter>();
+        services.AddScoped<IProjectService, ProjectService>();
+        services.AddScoped<IKeyVaultService, KeyVaultService>();
         services.AddScoped<IHttpClientProvider, HttpClientProvider>();
         services.AddScoped<IProfileAdapter, ProfileAdapter>();
         services.AddScoped<IProfileService, ProfileService>();
-        services.AddScoped<IGitRepositoryAdapter, GitRepositoryAdapter>();
-        services.AddScoped<IGitVersionAdapter, GitVersionAdapter>();
-        services.AddScoped<IGitFileAdapter, GitFileAdapter>();
-        services.AddScoped<IReleasePipelineAdapter, ReleasePipelineAdapter>();
-        services.AddScoped<IBuildPipelineAdapter, BuildPipelineAdapter>();
+        services.AddScoped<IGitRepositoryService, GitRepositoryService>();
+        services.AddScoped<IGitVersionService, GitVersionService>();
+        services.AddScoped<IGitFileService, GitFileService>();
+        services.AddScoped<IReleasePipelineService, ReleasePipelineService>();
+        services.AddScoped<IBuildPipelineService, BuildPipelineService>();
         services.AddScoped<ISprintAdapter, SprintAdapter>();
-        services.AddScoped<IPullRequestAdapter, PullRequestAdapter>();
+        services.AddScoped<IPullRequestService, PullRequestService>();
+        services.AddScoped<IWorkItemAdapter, WorkItemAdapter>();
         services.AddHostedService<CommandProcessorBackgroundService>();
     }
 }

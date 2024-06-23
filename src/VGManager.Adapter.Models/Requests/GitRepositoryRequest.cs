@@ -1,6 +1,6 @@
 namespace VGManager.Adapter.Models.Requests;
 
-public class GitRepositoryRequest<T> : GitBaseRequest<T>
+public record GitRepositoryRequest<T> : GitBaseRequest<T>
 {
     public string FilePath { get; set; } = null!;
 

@@ -1,6 +1,6 @@
 namespace VGManager.Adapter.Models.Response;
 
-public class GitPRResponse
+public record GitPRResponse
 {
     public required string Title { get; set; }
     public required string Repository { get; set; }
