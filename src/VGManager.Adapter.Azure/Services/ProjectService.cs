@@ -31,7 +31,7 @@ public class ProjectService(ILogger<ProjectService> logger) : IProjectService
                 return ResponseProvider.GetResponse(new AdapterResponseModel<IEnumerable<ProjectRequest>>()
                 {
                     Status = AdapterStatus.Unknown,
-                    Data = Enumerable.Empty<ProjectRequest>()
+                    Data = []
                 });
             }
 

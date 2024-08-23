@@ -11,6 +11,7 @@ public interface IVariableGroupAdapter
     Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<VariableValue>>>>> GetAllAsync(
         GetVGRequest request,
         bool lightWeightRequest,
+        ExceptionModel[]? exceptions,
         CancellationToken cancellationToken = default
         );
     Task<BaseResponse<AdapterResponseModel<int>>> GetNumberOfFoundVGsAsync(

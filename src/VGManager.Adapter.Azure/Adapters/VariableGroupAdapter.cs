@@ -24,12 +24,13 @@ public class VariableGroupAdapter(
     public async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<VariableValue>>>>> GetAllAsync(
         GetVGRequest request,
         bool lightWeightRequest,
+        ExceptionModel[]? exceptions,
         CancellationToken cancellationToken = default
         )
     {
         try
         {
-            return await GetAllVGsAsync(request, lightWeightRequest, cancellationToken);
+            return await GetAllVGsAsync(request, lightWeightRequest, exceptions, cancellationToken);
         }
         catch (VssUnauthorizedException ex)
         {
@@ -73,7 +74,7 @@ public class VariableGroupAdapter(
                 });
             }
 
-            var result = await GetAllVGsAsync(request, true, cancellationToken);
+            var result = await GetAllVGsAsync(request, true, null, cancellationToken);
             return ResponseProvider.GetResponse(new AdapterResponseModel<int>()
             {
                 Data = result.Data.Data.Count(),
@@ -118,8 +119,8 @@ public class VariableGroupAdapter(
 
         var variableGroupName = request.Params.Name;
         var project = request.Project;
-        request.Params.VariableGroupProjectReferences = new List<VariableGroupProjectReference>()
-        {
+        request.Params.VariableGroupProjectReferences =
+        [
             new()
             {
                 Name = variableGroupName,
@@ -128,7 +129,7 @@ public class VariableGroupAdapter(
                     Name = project
                 }
             }
-        };
+        ];
 
         try
         {
@@ -177,6 +178,7 @@ public class VariableGroupAdapter(
     private async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<VariableValue>>>>> GetAllVGsAsync(
         GetVGRequest request,
         bool lightWeightRequest,
+        ExceptionModel[]? exceptions,
         CancellationToken cancellationToken
         )
     {
@@ -195,8 +197,53 @@ public class VariableGroupAdapter(
             filteredVariableGroups = filteredVariableGroups.Where(vg => request.PotentialVariableGroups.Contains(vg.Name));
         }
 
+        if (exceptions is not null)
+        {
+            filteredVariableGroups = FilterVariableGroupsByExceptions(filteredVariableGroups, exceptions);
+        }
+
         var result = CollectResult(request, lightWeightRequest, filteredVariableGroups);
         return ResponseProvider.GetResponse(GetResult(AdapterStatus.Success, result));
+    }
+
+    private static List<VariableGroup> FilterVariableGroupsByExceptions(IEnumerable<VariableGroup> variableGroups, ExceptionModel[] exceptions)
+    {
+        var filteredVariableGroups = new List<VariableGroup>();
+
+        foreach (var variableGroup in variableGroups)
+        {
+            var instanceIsAnException = IsVariableGroupAnException(exceptions, variableGroup);
+            if (!instanceIsAnException)
+            {
+                filteredVariableGroups.Add(variableGroup);
+            }
+        }
+
+        return filteredVariableGroups;
+    }
+
+    private static bool IsVariableGroupAnException(ExceptionModel[] exceptions, VariableGroup variableGroup)
+    {
+        var instanceIsAnException = false;
+        foreach (var exception in exceptions)
+        {
+            if (exception.VariableGroupName == variableGroup.Name)
+            {
+                if (exception.VariableKey is not null)
+                {
+                    if (variableGroup.Variables.ContainsKey(exception.VariableKey))
+                    {
+                        instanceIsAnException = true;
+                    }
+                }
+                else
+                {
+                    instanceIsAnException = true;
+                }
+            }
+        }
+
+        return instanceIsAnException;
     }
 
     private List<SimplifiedVGResponse<VariableValue>> CollectResult(
@@ -304,30 +351,21 @@ public class VariableGroupAdapter(
     private static AdapterResponseModel<IEnumerable<SimplifiedVGResponse<T>>> GetResult<T>(
         AdapterStatus status,
         IEnumerable<SimplifiedVGResponse<T>> variableGroups
-        )
-    {
-        return new()
+        ) => new()
         {
             Status = status,
             Data = variableGroups
         };
-    }
 
-    private static AdapterResponseModel<IEnumerable<SimplifiedVGResponse<T>>> GetEmptyResult<T>(AdapterStatus status)
+    private static AdapterResponseModel<IEnumerable<SimplifiedVGResponse<T>>> GetEmptyResult<T>(AdapterStatus status) => new()
     {
-        return new()
-        {
-            Status = status,
-            Data = Enumerable.Empty<SimplifiedVGResponse<T>>()
-        };
-    }
+        Status = status,
+        Data = []
+    };
 
-    private static AdapterResponseModel<int> GetEmptyCountResult(AdapterStatus status)
+    private static AdapterResponseModel<int> GetEmptyCountResult(AdapterStatus status) => new()
     {
-        return new()
-        {
-            Status = status,
-            Data = 0
-        };
-    }
+        Status = status,
+        Data = 0
+    };
 }
