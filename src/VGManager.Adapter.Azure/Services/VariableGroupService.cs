@@ -33,7 +33,7 @@ public class VariableGroupService(
                     Data = new AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>(),
                 };
             }
-            var result = await variableGroupAdapter.GetAllAsync(payload, true, cancellationToken);
+            var result = await variableGroupAdapter.GetAllAsync(payload, true, null, cancellationToken);
 
             return new BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<string>>>>
             {
@@ -69,21 +69,21 @@ public class VariableGroupService(
     {
         try
         {
-            var variableGroupAddModel = PayloadProvider<VariableGroupAddModel>.GetPayload(command.Payload);
-            if (variableGroupAddModel is null)
+            var payload = PayloadProvider<VariableGroupAddModel>.GetPayload(command.Payload);
+            if (payload is null)
             {
                 return GetErrorResult();
             }
-            variableGroupAddModel.ContainsSecrets = false;
-            var vgEntity = await GetAllAsync(variableGroupAddModel, true, cancellationToken);
+            payload.ContainsSecrets = false;
+            var vgEntity = await GetAllAsync(payload, true, payload.Exceptions, cancellationToken);
             var status = vgEntity.Data.Status;
 
             if (status == AdapterStatus.Success)
             {
-                var key = variableGroupAddModel.Key;
-                var value = variableGroupAddModel.Value;
+                var key = payload.Key;
+                var value = payload.Value;
                 var filteredVariableGroups = vgEntity.Data.Data;
-                var finalStatus = await AddVariablesAsync(variableGroupAddModel, filteredVariableGroups, key, value, cancellationToken);
+                var finalStatus = await AddVariablesAsync(payload, filteredVariableGroups, key, value, cancellationToken);
                 return GetResult(finalStatus);
             }
             return GetResult(status);
@@ -107,15 +107,18 @@ public class VariableGroupService(
                 return GetErrorResult();
             }
             payload.ContainsSecrets = false;
-            var vgEntity = await GetAllAsync(payload, payload.FilterAsRegex, cancellationToken);
+            var vgEntity = await GetAllAsync(payload, payload.FilterAsRegex, payload.Exceptions, cancellationToken);
             var status = vgEntity.Data.Status;
 
             if (status == AdapterStatus.Success)
             {
                 var keyFilter = payload.KeyFilter;
                 var valueFilter = payload.ValueFilter;
-                var newValue = payload.NewValue;
+
+                Regex? keyRegex = null;
                 Regex? valueRegex = null;
+
+                var keyIsRegex = payload.KeyIsRegex ?? false;
 
                 if (valueFilter is not null)
                 {
@@ -129,13 +132,23 @@ public class VariableGroupService(
                     }
                 }
 
+                if (keyIsRegex)
+                {
+                    try
+                    {
+                        keyRegex = new Regex(keyFilter.ToLower(), RegexOptions.None, TimeSpan.FromMilliseconds(5));
+                    }
+                    catch (RegexParseException ex)
+                    {
+                        logger.LogError(ex, "Couldn't parse and create regex. Value: {value}.", keyFilter);
+                    }
+                }
+
                 var finalStatus = await UpdateVariableGroupsAsync(
                     payload,
-                    newValue,
                     vgEntity.Data.Data,
-                    keyFilter,
+                    keyRegex,
                     valueRegex,
-                    valueFilter,
                     cancellationToken
                     );
 
@@ -156,13 +169,13 @@ public class VariableGroupService(
     {
         try
         {
-            var payload = PayloadProvider<VariableGroupUpdateModel>.GetPayload(command.Payload);
+            var payload = PayloadProvider<VariableGroupChangeModel>.GetPayload(command.Payload);
             if (payload is null)
             {
                 return GetErrorResult();
             }
             payload.ContainsSecrets = false;
-            var vgEntity = await GetAllAsync(payload, payload.FilterAsRegex, cancellationToken);
+            var vgEntity = await GetAllAsync(payload, payload.FilterAsRegex, payload.Exceptions, cancellationToken);
             var status = vgEntity.Data.Status;
 
             if (status == AdapterStatus.Success)
@@ -337,12 +350,10 @@ public class VariableGroupService(
     }
 
     private async Task<AdapterStatus> UpdateVariableGroupsAsync(
-        VariableGroupModel model,
-        string newValue,
+        VariableGroupUpdateModel model,
         IEnumerable<SimplifiedVGResponse<VariableValue>> filteredVariableGroups,
-        string keyFilter,
+        Regex? keyRegex,
         Regex? valueRegex,
-        string? valueFilter,
         CancellationToken cancellationToken
         )
     {
@@ -352,7 +363,7 @@ public class VariableGroupService(
         foreach (var filteredVariableGroup in filteredVariableGroups)
         {
             var variableGroupName = filteredVariableGroup.Name;
-            var updateIsNeeded = UpdateVariables(newValue, keyFilter, valueRegex, valueFilter, filteredVariableGroup);
+            var updateIsNeeded = UpdateVariables(model.NewValue, model.KeyFilter, keyRegex, valueRegex, model.ValueFilter, filteredVariableGroup);
 
             if (updateIsNeeded)
             {
@@ -392,12 +403,13 @@ public class VariableGroupService(
     private bool UpdateVariables(
         string newValue,
         string keyFilter,
+        Regex? keyRegex,
         Regex? valueRegex,
         string? valueFilter,
         SimplifiedVGResponse<VariableValue> filteredVariableGroup
         )
     {
-        var filteredVariables = variableFilterService.Filter(filteredVariableGroup.Variables, keyFilter);
+        var filteredVariables = keyRegex is null ? variableFilterService.Filter(filteredVariableGroup.Variables, keyFilter) : variableFilterService.Filter(filteredVariableGroup.Variables, keyRegex);
         var updateIsNeeded = false;
 
         foreach (var filteredVariable in filteredVariables)
@@ -452,6 +464,7 @@ public class VariableGroupService(
     private async Task<BaseResponse<AdapterResponseModel<IEnumerable<SimplifiedVGResponse<VariableValue>>>>> GetAllAsync(
         VariableGroupModel variableGroupModel,
         bool filterAsRegex,
+        ExceptionModel[]? exceptions,
         CancellationToken cancellationToken
         )
     {
@@ -467,7 +480,7 @@ public class VariableGroupService(
             KeyFilter = variableGroupModel.KeyFilter,
         };
 
-        return await variableGroupAdapter.GetAllAsync(request, false, cancellationToken);
+        return await variableGroupAdapter.GetAllAsync(request, false, exceptions, cancellationToken);
     }
 
     private static BaseResponse<AdapterStatus> GetResult(AdapterStatus status)
