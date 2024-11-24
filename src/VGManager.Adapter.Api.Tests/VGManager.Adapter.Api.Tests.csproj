@@ -14,4 +14,27 @@
     <ProjectReference Include="..\VGManager.Adapter.Api\VGManager.Adapter.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Moq" Version="4.20.72" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="NUnit" Version="4.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="NUnit.Analyzers" Version="4.4.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="NUnit3TestAdapter" Version="4.6.0" />
+  </ItemGroup>
+
 </Project>
