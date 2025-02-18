@@ -1,6 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using CorrelationId;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using System.Diagnostics.CodeAnalysis;
 using VGManager.Adapter.Api.HealthChecks;
 using VGManager.Communication.Kafka.Extensions;
 

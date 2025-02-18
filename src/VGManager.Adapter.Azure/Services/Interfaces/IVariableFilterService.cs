@@ -1,5 +1,5 @@
-using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using System.Text.RegularExpressions;
+using Microsoft.TeamFoundation.DistributedTask.WebApi;
 
 namespace VGManager.Adapter.Azure.Services.Interfaces;
 

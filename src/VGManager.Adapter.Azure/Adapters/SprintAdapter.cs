@@ -1,6 +1,6 @@
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Work.WebApi;
-using System.Text.RegularExpressions;
 using VGManager.Adapter.Azure.Adapters.Interfaces;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.StatusEnums;
