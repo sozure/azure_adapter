@@ -1,10 +1,10 @@
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using VGManager.Adapter.Azure.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;
 using VGManager.Adapter.Models.Kafka;

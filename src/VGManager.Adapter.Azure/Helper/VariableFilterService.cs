@@ -1,6 +1,6 @@
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
-using System.Text.RegularExpressions;
 using VGManager.Adapter.Azure.Services.Interfaces;
 
 namespace VGManager.Adapter.Azure.Helper;

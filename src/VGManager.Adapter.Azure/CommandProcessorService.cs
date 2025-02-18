@@ -1,6 +1,6 @@
+using System.Text.Json;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using VGManager.Adapter.Interfaces;
 using VGManager.Adapter.Models.Kafka;
 using VGManager.Communication.Kafka.Interfaces;

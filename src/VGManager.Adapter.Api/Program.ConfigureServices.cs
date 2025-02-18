@@ -1,6 +1,6 @@
+using System.Reflection;
 using CorrelationId.DependencyInjection;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
 using VGManager.Adapter.Api.BackgroundServices;
 using VGManager.Adapter.Api.HealthChecks;
 using VGManager.Adapter.Azure;

@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Options;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
+using Microsoft.TeamFoundation.SourceControl.WebApi;
 using VGManager.Adapter.Azure.Adapters.Interfaces;
 using VGManager.Adapter.Azure.Helper;
 using VGManager.Adapter.Azure.Services.Interfaces;

@@ -29,7 +29,7 @@ public class KeyVaultService(
         {
             if (payload is null)
             {
-                return ResponseProvider.GetResponse((string.Empty, Enumerable.Empty<string>()));
+                return ResponseProvider.GetResponse((string.Empty, []));
             }
 
             var tenantId = payload.TenantId;
@@ -49,8 +49,9 @@ public class KeyVaultService(
 
             return ResponseProvider.GetResponse((sub?.Id ?? string.Empty, result));
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            logger.LogError("Error when requesting key vaults: {Ex}", ex);
             return ResponseProvider.GetResponse((string.Empty, Enumerable.Empty<string>()));
         }
     }
